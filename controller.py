@@ -1,9 +1,8 @@
-import numpy as np
 import tkinter as tk
-from tkinter import ttk
 from view import View
 from model import Model
 import plotter
+from obspy.taup import plot_travel_times
 
 class Controller():
     """
@@ -19,7 +18,10 @@ class Controller():
         self.view.main()
 
  
-    def _on_press_load_wavefield(self):
+    def on_press_load_wavefield(self):
+        """Functionality of load button
+        """        
+        # Check for possible errors
         if len(self.view.wavefield_path.get()) == 0:
             tk.messagebox.showerror("Error", "The wavefield path entry is empty!")
         elif len(self.view.cat_path.get()) == 0:
@@ -29,6 +31,7 @@ class Controller():
         elif len(self.view.data_type.get()) == 0:
             tk.messagebox.showerror("Error", "The data type entry is empty!")
         else:
+            # If the wavefield database is empty, create a database entry
             if self.model.wavefield_database is None:
                 self.model.create_database()
                 self.model.load_wavefield(self.view.wavefield_path.get(),
@@ -61,7 +64,7 @@ class Controller():
                     self.view.inv_path_entry.delete(0, 'end')
 
 
-    def _on_press_auto_load_wavefield(self):
+    def on_press_auto_load_wavefield(self):
         if len(self.view.wavefield_path.get()) == 0:
             tk.messagebox.showerror("Error", "The wavefield path entry is empty!")
         elif len(self.view.data_type.get()) == 0:
@@ -95,7 +98,7 @@ class Controller():
                     self.view.inv_path_entry.delete(0, 'end')
 
 
-    def _on_press_select_wavefield(self):
+    def on_press_select_wavefield(self):
         for i in self.view.listbox.curselection():
             SELECTION_EXISTS = False
             for _, listbox_entry in enumerate(self.view.selection_listbox.get(0, tk.END)):
@@ -112,7 +115,7 @@ class Controller():
                 self.view.frg_wave_options.append(self.view.listbox.get(i)) """
                 
 
-    def _on_press_deselect_wavefield(self):
+    def on_press_deselect_wavefield(self):
         if len(self.view.selection_listbox.curselection()) == 0:
             tk.messagebox.showerror("Error", "Select a database to be deselected!")
         else:
@@ -121,7 +124,22 @@ class Controller():
                 self.view.selection_listbox.delete(i)
 
 
-    def _on_press_plot_button(self):
+    def on_press_delete_wavefield(self):
+        if len(self.view.listbox.curselection()) == 0:
+            tk.messagebox.showerror("Error", "Select a database to be deleted!")
+        else:
+            for i in self.view.listbox.curselection():
+                self.model.wavefield_database.delete_from_database(self.view.listbox.get(i))
+                
+                for j, selection_listbox_entry in enumerate(self.view.selection_listbox.get(0, tk.END)):
+                    if selection_listbox_entry == self.view.listbox.get(i):
+                        self.view.selection_listbox.delete(j)
+                        
+                self.view.listbox.delete(i)
+
+
+    def on_press_plot_button(self):
+        # Check if there is any database selected for plotting 
         try:
             self.model.wavefield_database.selected_database
             
@@ -132,7 +150,8 @@ class Controller():
                 tk.messagebox.showerror("Error", "The selected database is empty!")
                 
         else:
-
+            
+            # get the data 
             times, streams = self.model.get_times_and_streams()
             
             if len(self.view.xlim.get()) == 0:
@@ -160,25 +179,11 @@ class Controller():
             inv_selection = self.model.get_selected_inv()
             cat = self.model.wavefield_database.database[self.view.selection_listbox.get(0)]['cat']
             
-            plot_obj = plotter.Plot(times, streams, inv_selection, cat, model, phase_list, 
+            plotter.Plot(times, streams, inv_selection, cat, model, phase_list, 
                                     self.view.difference_checkbox_state.get(), xlims)
-            self.view.make_graph(plot_obj)
 
 
-    def _on_press_delete_wavefield(self):
-        if len(self.view.listbox.curselection()) == 0:
-            tk.messagebox.showerror("Error", "Select a database to be deleted!")
-        else:
-            for i in self.view.listbox.curselection():
-                self.model.wavefield_database.delete_from_database(self.view.listbox.get(i))
-                
-                for j, selection_listbox_entry in enumerate(self.view.selection_listbox.get(0, tk.END)):
-                    if selection_listbox_entry == self.view.listbox.get(i):
-                        self.view.selection_listbox.delete(j)
-                        
-                self.view.listbox.delete(i)
-    
-    def _on_press_plot_stations_button(self):
+    def on_press_plot_stations_button(self):
         
         try:
             self.model.wavefield_database.selected_database
@@ -189,10 +194,10 @@ class Controller():
                 tk.messagebox.showerror("Error", "The selected database is empty!")
         
         inv_selection = self.model.get_selected_inv()
-        plot_obj = plotter.plot_stations(inv_selection)
-        self.view.make_stationsplot(plot_obj)
-        
-    def _on_press_plot_traveltimes_button(self):
+        inv_selection.plot(size=50, marker='*', show=True)
+
+
+    def on_press_plot_traveltimes_button(self):
         if len(self.view.phase_list.get()) != 0:
             phase_list = self.view.phase_list.get().split(',')
         else:
@@ -200,13 +205,12 @@ class Controller():
         try:
             evt_depth = float(self.view.event_depth.get())
             earth_model = self.view.model.get()
-            plot_obj = plotter.my_plot_travel_times(evt_depth, phase_list, model = earth_model)
-            self.view.make_traveltime(plot_obj)
+            plot_travel_times(source_depth=evt_depth, phase_list=phase_list, model=earth_model)
         except:
             tk.messagebox.showerror("Error", "Please enter the depth")
         
         
-    def _on_press_plot_earth_button(self):
+    def on_press_plot_earth_button(self):
         try:
             self.model.wavefield_database.selected_database
         except:
@@ -229,8 +233,7 @@ class Controller():
         inv_selection = self.model.get_selected_inv()
         earth_model = self.view.model.get()
         
-        plot_obj = plotter.plt_earth(phase_list, earth_model, inv_selection, cat, file)
-        #self.view.make_earth(plot_obj)
+        plotter.Plot_3D_Earth(phase_list, earth_model, inv_selection, cat, file)
 
 if __name__ == '__main__':
     calculator = Controller()

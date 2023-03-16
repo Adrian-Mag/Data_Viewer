@@ -15,7 +15,6 @@ class View(tk.Tk):
     """
     PAD = 10
 
-
     def __init__(self, controller):
 
         super().__init__()
@@ -32,11 +31,10 @@ class View(tk.Tk):
         self._make_databases_frame()
         self._make_add_databases_frame()
         self._make_review_databases_frame()
-        
         self._make_graph_control_frame()
 
         #self._make_crosscorrelation_control_frame()
-        
+
     def main(self):
         self.mainloop()
 
@@ -44,7 +42,7 @@ class View(tk.Tk):
 # DATABASE FRAME
 ################
     def _make_databases_frame(self):
-        self.databases_frame = tk.Frame(self, bg='yellow')
+        self.databases_frame = tk.Frame(self, bg='#002147')
         self.databases_frame.grid(sticky="nsew", row=0, padx=10, pady=10)
         self.databases_frame.rowconfigure(0, weight=1)
         self.databases_frame.columnconfigure(0, weight=1)
@@ -103,13 +101,13 @@ class View(tk.Tk):
         # Create button to load mseed file
         self.load_wavefield = tk.Button(self.add_databases_frame,
                                                 text="Load wavefield",
-                             command=self.controller._on_press_load_wavefield) # noqa
+                             command=self.controller.on_press_load_wavefield) # noqa
         self.load_wavefield.grid(row=0,column=2)
         
         # auto load button (searches for cat and inv by itself)
         self.auto_load_wavefield = tk.Button(self.add_databases_frame,
                                                 text="Auto load wavefield",
-                             command=self.controller._on_press_auto_load_wavefield) # noqa
+                             command=self.controller.on_press_auto_load_wavefield) # noqa
         self.auto_load_wavefield.grid(row=1,column=2)
 
 
@@ -135,12 +133,12 @@ class View(tk.Tk):
         self.database_buttons_frame.columnconfigure(1, weight=1)
         self.select_wavefield = tk.Button(self.database_buttons_frame,
                                                 text="Select wavefield",
-                             command=self.controller._on_press_select_wavefield) # noqa
+                             command=self.controller.on_press_select_wavefield) # noqa
         self.select_wavefield.grid(row=0,column=0)
         
         self.delete_wavefield = tk.Button(self.database_buttons_frame,
                                                 text="Delete wavefield",
-                             command=self.controller._on_press_delete_wavefield) # noqa
+                             command=self.controller.on_press_delete_wavefield) # noqa
         self.delete_wavefield.grid(row=0,column=1)
 
         
@@ -150,173 +148,19 @@ class View(tk.Tk):
         # Selection listbox
         self.deselect_wavefield = tk.Button(self.review_databases_frame,
                                                 text="Deselect wavefield",
-                             command=self.controller._on_press_deselect_wavefield) # noqa
+                             command=self.controller.on_press_deselect_wavefield) # noqa
         self.deselect_wavefield.grid(row=2,column=1)
 
         self.selection_listbox = tk.Listbox(self.review_databases_frame)
         self.selection_listbox.grid(sticky='nsew', row=1,column=1)
         self.selection_listbox_index = 0
 
-#################
-# PLOTTING WINDOW
-#################
-    def _make_plot_window(self):
-        # Toplevel object which will
-        # be treated as a new window
-        self.Plot_window = tk.Toplevel(self)
-
-        # sets the title of the
-        # Toplevel widget
-        self.Plot_window.title("New Window")
-
-        # sets the geometry of toplevel
-        self.Plot_window.geometry("800x800")
-
-
-    def _make_graph_frame(self):
-        self.graph_frame = tk.Frame(self.Plot_window, bg='blue')
-        self.graph_frame.grid(sticky="nsew", row=0, column=0, padx=10, pady=10)
-        self.graph_frame.rowconfigure(0, weight=1)
-        self.graph_frame.columnconfigure(0, weight=1)
-
-
-    def _initiate_graph(self):
-        time = np.linspace(0,10,100)
-        my_dummy_plot = plotter.dummy_Plot([time, time], [np.sin(time), np.cos(time)])
-        self.make_graph(my_dummy_plot)
-
-
-    def make_graph(self, plot_obj: object):
-        self._make_plot_window()
-        self._make_graph_frame()
-        
-        for widgets in self.graph_frame.winfo_children():
-            widgets.destroy()
-        figure_canvas = FigureCanvasTkAgg(plot_obj, self.graph_frame)
-        figure_canvas.get_tk_widget().grid(row=1, ipadx=0, ipady=0,
-                                           sticky="nsew")  
-
-########################
-# TRAVELTIME PLOT WINDOW
-########################
-    def _make_traveltime_window(self):
-        # Toplevel object which will
-        # be treated as a new window
-        self.Traveltime_window = tk.Toplevel(self)
-
-        # sets the title of the
-        # Toplevel widget
-        self.Traveltime_window.title("New Window")
-
-        # sets the geometry of toplevel
-        self.Traveltime_window.geometry("1400x800")
-
-
-    def _make_traveltime_frame(self):
-        self.traveltime_frame = tk.Frame(self.Traveltime_window, bg='blue')
-        self.traveltime_frame.grid(sticky="nsew", row=0, column=0, padx=0, pady=0)
-        self.traveltime_frame.rowconfigure(0, weight=1)
-        self.traveltime_frame.columnconfigure(0, weight=1)
-
-
-    def _initiate_traveltime(self):
-        time = np.linspace(0,10,100)
-        my_dummy_traveltime = plotter.dummy_Plot([time, time], [np.sin(time), np.cos(time)])
-        self.make_graph(my_dummy_traveltime)
-
-
-    def make_traveltime(self, plot_obj: object):
-        self._make_traveltime_window()
-        self._make_traveltime_frame()
-        
-        for widgets in self.traveltime_frame.winfo_children():
-            widgets.destroy()
-        figure_canvas_traveltime = FigureCanvasTkAgg(plot_obj, self.traveltime_frame)
-        figure_canvas_traveltime.get_tk_widget().grid(row=1, ipadx=0, ipady=0,
-                                           sticky="nsew") 
-
-#####################
-# STATION PLOT WINDOW
-#####################
-    def _make_stationsplot_window(self):
-        # Toplevel object which will
-        # be treated as a new window
-        self.stationsplot_window = tk.Toplevel(self)
-
-        # sets the title of the
-        # Toplevel widget
-        self.stationsplot_window.title("New Window")
-
-        # sets the geometry of toplevel
-        self.stationsplot_window.geometry("800x600")
-
-
-    def _make_stationsplot_frame(self):
-        self.stationsplot_frame = tk.Frame(self.stationsplot_window, bg='blue')
-        self.stationsplot_frame.grid(sticky="nsew", row=0, column=0, padx=10, pady=10)
-        self.stationsplot_frame.rowconfigure(0, weight=1)
-        self.stationsplot_frame.columnconfigure(0, weight=1)
-
-
-    def _initiate_stationsplot(self):
-        time = np.linspace(0,10,100)
-        my_dummy_stationsplot = plotter.dummy_Plot([time, time], [np.sin(time), np.cos(time)])
-        self.make_graph(my_dummy_stationsplot)
-
-
-    def make_stationsplot(self, plot_obj: object):
-        self._make_stationsplot_window()
-        self._make_stationsplot_frame()
-        
-        for widgets in self.stationsplot_frame.winfo_children():
-            widgets.destroy()
-        figure_canvas_stationsplot = FigureCanvasTkAgg(plot_obj, self.stationsplot_frame)
-        figure_canvas_stationsplot.get_tk_widget().grid(row=1, ipadx=20, ipady=20,
-                                           sticky="nsew")
-
-####################
-# EARTH PLOT WINDOW
-####################
-    def _make_earth_window(self):
-        # Toplevel object which will
-        # be treated as a new window
-        self.earth_window = tk.Toplevel(self)
-
-        # sets the title of the
-        # Toplevel widget
-        self.earth_window.title("New Window")
-
-        # sets the geometry of toplevel
-        self.earth_window.geometry("800x800")
-
-
-    def _make_earth_frame(self):
-        self.earth_frame = tk.Frame(self.earth_window, bg='blue')
-        self.earth_frame.grid(sticky="nsew", row=0, column=0, padx=10, pady=10)
-        self.earth_frame.rowconfigure(0, weight=1)
-        self.earth_frame.columnconfigure(0, weight=1)
-
-
-    def _initiate_earth(self):
-        time = np.linspace(0,10,100)
-        my_dummy_earth = plotter.dummy_Plot([time, time], [np.sin(time), np.cos(time)])
-        self.make_graph(my_dummy_earth)
-
-    def make_earth(self, plot_obj: object):
-        self._make_earth_window()
-        self._make_earth_frame()
-        
-        for widgets in self.earth_frame.winfo_children():
-            widgets.destroy()
-        figure_canvas_earth = FigureCanvasTkAgg(plot_obj, self.earth_frame)
-        figure_canvas_earth.get_tk_widget().grid(row=1, ipadx=20, ipady=20,
-                                           sticky="ns")    
     
 #####################
 # CONTROL PLOTS FRAME
 #####################
     def _make_graph_control_frame(self):
-        self.graph_control_frame = tk.Frame(self, bg='red')
+        self.graph_control_frame = tk.Frame(self, bg='#002147')
         self.graph_control_frame.grid(sticky="nsew", row=1, column=0, padx=20, pady=20)
         self.graph_control_frame.rowconfigure(0, weight=1)
         self.graph_control_frame.rowconfigure(1, weight=1)
@@ -340,22 +184,22 @@ class View(tk.Tk):
         # Plot button
         self.plot_button = tk.Button(self.graph_control_frame,
                                                 text="Plot",
-                             command=self.controller._on_press_plot_button) # noqa
+                             command=self.controller.on_press_plot_button) # noqa
         self.plot_button.grid(row=0,column=10)
         # Station plot button
         self.plot_stations_button = tk.Button(self.graph_control_frame,
                                                 text="Plot stations",
-                             command=self.controller._on_press_plot_stations_button) # noqa
+                             command=self.controller.on_press_plot_stations_button) # noqa
         self.plot_stations_button.grid(row=1,column=10)
         # Traveltime plot button
         self.plot_traveltimes_button = tk.Button(self.graph_control_frame,
                                                 text="Plot travel times",
-                             command=self.controller._on_press_plot_traveltimes_button) # noqa
+                             command=self.controller.on_press_plot_traveltimes_button) # noqa
         self.plot_traveltimes_button.grid(row=2,column=10)
         # 3D Earth plot button
         self.plot_traveltimes_button = tk.Button(self.graph_control_frame,
                                                 text="Plot Earth",
-                             command=self.controller._on_press_plot_earth_button) # noqa
+                             command=self.controller.on_press_plot_earth_button) # noqa
         self.plot_traveltimes_button.grid(row=3,column=10)
 
         # Min freq

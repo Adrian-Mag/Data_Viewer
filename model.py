@@ -148,12 +148,12 @@ class Model:
                 stream.filter('highpass', freq=freq_min)
             
             
-            times.append(self.get_time(data_type, stream, cat))
+            times.append(self._get_time(data_type, stream, cat))
             streams.append(stream)
 
         return [times, streams]
         
-    def get_time(self, data_type, stream, cat):
+    def _get_time(data_type, stream, cat):
         # Get the times for the selected traces
         # Center time axis on event origin time
         # Axisem3D gives centred data

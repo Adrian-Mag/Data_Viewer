@@ -2,9 +2,7 @@ import matplotlib
 matplotlib.use('tkagg')
 import matplotlib.pyplot as plt
 import numpy as np
-from obspy.taup import TauPyModel, plot_travel_times
-import matplotlib.cm as cm
-from obspy.taup.ray_paths import get_ray_paths
+from obspy.taup import TauPyModel
 from obspy.taup.utils import parse_phase_list
 from obspy.taup.seismic_phase import SeismicPhase
 from matplotlib.pyplot import get_cmap
@@ -45,6 +43,7 @@ def dummy_Plot(time: np.ndarray, data:np.ndarray) -> plt.figure:
     axs[1].plot(time[1], data[1])
 
     return fig
+
 
 def Plot(times: np.array, streams: obspy.Stream, inv_selection: obspy.Inventory, 
          cat: obspy.Catalog, model: obspy.taup.tau.TauPyModel, phase_list: list, plot_diff: bool, xlims=None) -> plt.figure:
@@ -307,108 +306,10 @@ def Plot(times: np.array, streams: obspy.Stream, inv_selection: obspy.Inventory,
         else:
             ax.set_xlim(xlims[0], xlims[-1])
 
-    return fig_seismographs
+    plt.show()
 
 
-def my_plot_travel_times(source_depth: float, phase_list: str ="ttbasic", 
-                      min_degrees: float =0, max_degrees: float=180, model: str='prem',
-                      plot_all: bool=True, legend: bool=True, fig: plt.figure=None,
-                      ax: plt.axes=None):
-    """A modified version of the plot_travel_times from obspy
-
-    Args:
-        source_depth (float): source depth in km
-        phase_list (str, optional): string of phases separated by 
-            commas and no spaces in between. Defaults to "ttbasic".
-        min_degrees (float, optional): minimum source-station distance. 
-            Defaults to 0.
-        max_degrees (float, optional): maximum source-station distance. 
-            Defaults to 180.
-        model (str, optional): taup model used for computing travel times.
-            Defaults to 'prem'.
-        plot_all (bool, optional):  Defaults to True.
-        legend (bool, optional):  Defaults to True.
-        fig (plt.figure, optional): If we want to put the plot in an 
-            existing figure . Defaults to None.
-        ax (plt.axes, optional): If we want to put the plot in an existing 
-            axis. Defaults to None.
-
-    Returns:
-        _type_: figure
-    """    
-    # Create color map (taken from obspy codes)
-    cmap = get_cmap('Paired', lut=12)
-    COLORS = ['#%02x%02x%02x' % tuple(int(col * 255) for col in cmap(i)[:3])
-            for i in range(12)]
-    COLORS = COLORS[1:][::2][:-1] + COLORS[::2][:-1]
-    
-    # Create instance of Taup model if one is not existent already
-    if not isinstance(model, TauPyModel):
-        model = TauPyModel(model)
-
-    # Create an axis/figure, if there is none yet:
-    if fig and ax:
-        pass
-    elif not fig and not ax:
-        fig, ax = plt.subplots()
-    elif not ax:
-        ax = fig.add_subplot(1, 1, 1)
-    elif not fig:
-        fig = ax.figure
-
-    # correct TauModel for source depth
-    depth_corrected_model = model.model.depth_correct(source_depth)
-    phase_names = sorted(parse_phase_list(phase_list))
-    for i, phase in enumerate(phase_names):
-        ph = SeismicPhase(phase, depth_corrected_model)
-        # don't join lines across shadow zones
-        for s in ph._shadow_zone_splits():
-            dist_deg = (180.0/np.pi)*ph.dist[s]
-            time_min = ph.time[s]/60
-            c = COLORS[i % len(COLORS)]
-            if len(dist_deg) > 0:
-                if plot_all:
-                    # wrap-around plotting
-                    while dist_deg[0] > 360.0:
-                        dist_deg = dist_deg - 360.0
-                    ax.plot(dist_deg, time_min, label=phase, color=c)
-                    ax.plot(dist_deg - 360.0, time_min,
-                            label=None, color=c)
-                    ax.plot(360.0 - dist_deg, time_min,
-                            label=None, color=c)
-                else:
-                    ax.plot(dist_deg, time_min, label=phase, color=c)
-    if legend:
-        # plot legend, avoiding duplicate labels
-        handles, labels = ax.get_legend_handles_labels()
-        by_label = dict(zip(labels, handles))
-        ax.legend(by_label.values(), by_label.keys(), loc='upper center', numpoints=1, bbox_to_anchor=(0.5, 1.15), ncol=10)
-
-    ax.grid()
-    ax.set_xlabel("Distance (degrees)")
-    ax.set_ylabel("Time (minutes)")
-    ax.set_xlim(min_degrees, max_degrees)
-    ax.set_ylim(bottom=0.0)
-
-    fig.set_figheight(8)
-    fig.set_figwidth(12)
-    
-    return fig
-
-
-def plot_stations(inv_selection: obspy.Inventory):
-    """Plots the selected stations
-
-    Args:
-        inv_selection (obspy.Inventory): selected stations
-
-    Returns:
-        Nothing: it wutomatically shows the plot
-    """    
-    return inv_selection.plot(size=50, marker='*', show=False)
-
-
-def plt_earth(phase_list: list, earth_model: str, inv_selection: obspy.Inventory,
+def Plot_3D_Earth(phase_list: list, earth_model: str, inv_selection: obspy.Inventory,
                cat: obspy.Catalog, file: str):
     """Plots a 3D interactive Earth model that shows Earth's surface
     , CMB topography, the source and stations locations, as well as the 

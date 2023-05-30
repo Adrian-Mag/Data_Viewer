@@ -66,6 +66,9 @@ def Plot(times: np.array, streams: obspy.Stream, inv_selection: obspy.Inventory,
     distances = []
     # order stations by distance from origin
     
+    # IMPLEMENT SOMETHING THAT CHECKS IF THE SELECTED DATA HAVE THE SAME
+    # SOURCE CAT. IF THEY DON'T THEN THEY SHOULD NOT BE PLOTTED TOGETHER!!!!
+    
     # get event location
     evt_lat = cat[0].origins[0].latitude
     evt_lon = cat[0].origins[0].longitude

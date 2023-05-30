@@ -32,7 +32,7 @@ class View(tk.Tk):
         self._make_add_databases_frame()
         self._make_review_databases_frame()
         self._make_graph_control_frame()
-
+        self._make_other_buttons_frame()
         #self._make_crosscorrelation_control_frame()
 
     def main(self):
@@ -352,3 +352,220 @@ class View(tk.Tk):
         self.difference_checkbox = tk.Checkbutton(self.graph_control_frame, text='Plot difference squared',
                             variable=self.difference_checkbox_state, onvalue=1, offvalue=0)
         self.difference_checkbox.grid(row=0, column=11)
+
+#####################
+# OTHER BUTTONS FRAME
+#####################
+
+    def _make_other_buttons_frame(self):
+        self.other_buttons_frame = tk.Frame(self, bg='#002147')
+        self.other_buttons_frame.grid(sticky="nsew", row=2, column=0, padx=20, pady=20)
+            
+        # Element outputs
+        self.elements_output_button = tk.Button(self.other_buttons_frame,
+                                                text="Elements output",
+                             command=self.controller.on_press_elements_output_button) # noqa
+        self.elements_output_button.grid(row=0,column=0)
+        
+#######################        
+# ELEMENTS OUPUT WINDOW
+#######################
+    def _create_elements_output_window(self):
+        
+        self.elements_output_window = tk.Toplevel(self)
+
+        self.elements_output_window.title("Elements output")
+        self.elements_output_window.grid_rowconfigure(0,weight=1)
+        self.elements_output_window.grid_rowconfigure(1,weight=1)
+        self.elements_output_window.grid_columnconfigure(0,weight=1)
+        self.elements_output_window.geometry('{}x{}'.format(1080, 1920))
+        
+        self._make_elements_database_frame()
+        self._make_elements_add_database_frame()
+        self._make_elements_review_database_frame()
+        self._make_elements_control_frame()
+        
+
+#########################
+# ELEMENTS DATABASE FRAME
+#########################
+    def _make_elements_database_frame(self):
+        self.elements_database_frame = tk.Frame(self.elements_output_window, bg='#002147')
+        self.elements_database_frame.grid(sticky="nsew", row=0, column=0, padx=10, pady=10)
+        self.elements_database_frame.rowconfigure(0, weight=1)
+        self.elements_database_frame.columnconfigure(0, weight=1)
+        self.elements_database_frame.columnconfigure(1, weight=2)
+
+    def _make_elements_add_database_frame(self):
+        self.elements_add_database_frame = tk.Frame(self.elements_database_frame)
+        self.elements_add_database_frame.grid(sticky="nsew", row=0, column=0, padx=10, pady=10)
+        self.elements_add_database_frame.rowconfigure(0, weight=1)
+        self.elements_add_database_frame.rowconfigure(1, weight=1)
+        self.elements_add_database_frame.columnconfigure(0, weight=1)
+        self.elements_add_database_frame.columnconfigure(1, weight=1)
+        
+        # Create entry for path to elements output
+        self.elements_path = tk.StringVar()
+        self.elements_path_entry = tk.Entry(
+            self.elements_add_database_frame,
+            justify='left',
+            width = 50,
+            textvariable=self.elements_path
+        )
+        self.elements_path_entry.grid(row=0, column=1)
+        tk.Label(self.elements_add_database_frame, text='Path to elements output dir').grid(row=0, column=0)
+
+        # Create button for adding element output to elements database
+        self.load_elements_output = tk.Button(self.elements_add_database_frame,
+                                                text="Load elements data",
+                             command=self.controller.on_press_load_elements_output) # noqa
+        self.load_elements_output.grid(row=1,column=1)
+        
+    def _make_elements_review_database_frame(self):
+        self.elements_review_database_frame = tk.Frame(self.elements_database_frame)
+        self.elements_review_database_frame.grid(sticky="nsew", row=0, column=1, padx=10, pady=10)
+        self.elements_review_database_frame.rowconfigure(0, weight=1)
+        self.elements_review_database_frame.rowconfigure(1, weight=1)
+        self.elements_review_database_frame.rowconfigure(2, weight=1)
+        self.elements_review_database_frame.rowconfigure(3, weight=1)
+        self.elements_review_database_frame.columnconfigure(0, weight=1)
+        self.elements_review_database_frame.columnconfigure(1, weight=1)
+        
+        # Database listbox
+        tk.Label(self.elements_review_database_frame, text='Database').grid(row=0,column=0)
+        self.elements_listbox = tk.Listbox(self.elements_review_database_frame)
+        self.elements_listbox.grid(sticky='nsew', row=1, column=0)
+        self.elements_listbox_index = 0
+        
+        self.elements_review_database_buttons_subframe = tk.Frame(self.elements_review_database_frame)
+        self.elements_review_database_buttons_subframe.grid(sticky="nsew", row=2, column=0, padx=10, pady=10)
+        self.elements_review_database_buttons_subframe.rowconfigure(0, weight=1)
+        self.elements_review_database_buttons_subframe.columnconfigure(0, weight=1)
+        self.elements_review_database_buttons_subframe.columnconfigure(1, weight=1)
+        
+        # Buttons for Database listbox
+        self.select_elements_wavefield = tk.Button(self.elements_review_database_buttons_subframe,
+                                                   text='Select wavefield',
+                                                   command=self.controller.on_press_select_elements_wavefield)
+        self.select_elements_wavefield.grid(row=2, column=0)
+        self.delete_elements_wavefield = tk.Button(self.elements_review_database_buttons_subframe,
+                                                   text='Delete wavefield',
+                                                   command=self.controller.on_press_delete_elements_wavefield)
+        self.delete_elements_wavefield.grid(row=2, column=1)
+        
+        # Selected Database listbox
+        tk.Label(self.elements_review_database_frame, text='Selected Database').grid(row=0,column=1)
+        self.selected_elements_listbox = tk.Listbox(self.elements_review_database_frame)
+        self.selected_elements_listbox.grid(sticky='nsew', row=1, column=1)
+        self.selected_elements_listbox_index = 0
+        
+        # Button for Selected Database listbox
+        self.deselect_elements_wavefield = tk.Button(self.elements_review_database_frame,
+                                                   text='Deselect wavefield',
+                                                   command=self.controller.on_press_deselect_elements_wavefield)
+        self.deselect_elements_wavefield.grid(row=2, column=1)
+
+        
+########################
+# ELEMENTS CONTROL FRAME
+########################
+
+    def _make_elements_control_frame(self):
+        self.elements_control_frame = tk.Frame(self.elements_output_window, bg='#002147')
+        self.elements_control_frame.grid(sticky="nsew", row=1, column=0, padx=10, pady=10)
+        self.elements_control_frame.rowconfigure(0, weight=1)
+        self.elements_control_frame.rowconfigure(1, weight=1)
+        self.elements_control_frame.rowconfigure(2, weight=1)
+        self.elements_control_frame.rowconfigure(3, weight=1)
+        self.elements_control_frame.columnconfigure(0, weight=1)
+        self.elements_control_frame.columnconfigure(1, weight=1)
+        self.elements_control_frame.columnconfigure(2, weight=1)
+        self.elements_control_frame.columnconfigure(3, weight=1)
+        self.elements_control_frame.columnconfigure(4, weight=1)
+        self.elements_control_frame.columnconfigure(5, weight=1)
+        self.elements_control_frame.columnconfigure(6, weight=1)
+        
+        
+        # Buttons 
+        # Plot
+        self.plot_elements_button = tk.Button(self.elements_control_frame,
+                                                   text='Plot',
+                                                   command=self.controller.on_press_plot_elements_button)
+        self.plot_elements_button.grid(row=0, column=6)
+        
+        
+        # Min freq
+        self.elements_freq_min = tk.StringVar()
+        self.elements_freq_min_entry = tk.Entry(
+            self.elements_control_frame,
+            justify='left',
+            width=10,
+            textvariable=self.elements_freq_min,
+        )
+        self.elements_freq_min_entry.grid(row=0, column=1)
+        tk.Label(self.elements_control_frame, text='Min freq').grid(row=0,column=0)
+        # Max freq
+        self.elements_freq_max = tk.StringVar()
+        self.elements_freq_max_entry = tk.Entry(
+            self.elements_control_frame,
+            justify='left',
+            width=10,
+            textvariable=self.elements_freq_max,
+        )
+        self.elements_freq_max_entry.grid(row=1, column=1)
+        tk.Label(self.elements_control_frame, text='Max freq').grid(row=1,column=0)
+        # Depth
+        self.station_depth = tk.StringVar()
+        self.station_depth_entry = tk.Entry(
+            self.elements_control_frame,
+            justify='left',
+            width=10,
+            textvariable=self.station_depth,
+        )
+        self.station_depth_entry.grid(row=0, column=3)
+        tk.Label(self.elements_control_frame, text='Depth [km]').grid(row=0,column=2)
+        # Latitude
+        self.station_latitude = tk.StringVar()
+        self.station_latitude_entry = tk.Entry(
+            self.elements_control_frame,
+            justify='left',
+            width=10,
+            textvariable=self.station_latitude,
+        )
+        self.station_latitude_entry.grid(row=1, column=3)
+        tk.Label(self.elements_control_frame, text='Latitude [deg]').grid(row=1,column=2)
+        # Longitude
+        self.station_longitude = tk.StringVar()
+        self.station_longitude_entry = tk.Entry(
+            self.elements_control_frame,
+            justify='left',
+            width=10,
+            textvariable=self.station_longitude,
+        )
+        self.station_longitude_entry.grid(row=2, column=3)
+        tk.Label(self.elements_control_frame, text='Longitude [deg]').grid(row=2,column=2)
+        # Channel
+        self.elements_channel = tk.StringVar()
+        self.elements_channel_entry = tk.Entry(
+            self.elements_control_frame,
+            justify='left',
+            width=10,
+            textvariable=self.elements_channel,
+        )
+        self.elements_channel_entry.grid(row=3, column=3)
+        tk.Label(self.elements_control_frame, text='Channel').grid(row=3,column=2)
+        # Model drop down
+        self.elements_model = tk.StringVar()
+        self.elements_model.set('prem')
+        self.elements_model_options = tk.OptionMenu(self.elements_control_frame, self.elements_model, "prem", "iasp91", "ak135").grid(row=0, column=5)
+        tk.Label(self.elements_control_frame, text='Taup Model').grid(row=0,column=4)
+        # Phase list
+        self.elements_phase_list = tk.StringVar()
+        self.elements_phase_list_entry = tk.Entry(
+            self.elements_control_frame,
+            justify='left',
+            width=10,
+            textvariable=self.elements_phase_list,
+        )
+        self.elements_phase_list_entry.grid(row=1, column=5)
+        tk.Label(self.elements_control_frame, text='Phase list').grid(row=1,column=4)

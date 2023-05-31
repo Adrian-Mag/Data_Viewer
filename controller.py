@@ -179,6 +179,7 @@ class Controller():
             plotter.Plot(times, streams, inv_selection, cat, model, phase_list, 
                                     self.view.difference_checkbox_state.get(), xlims)
 
+
     def on_press_plot_elements_button(self):
         # Check if there is any database selected for plotting 
         try:
@@ -212,21 +213,20 @@ class Controller():
                 # get the data
                 times, streams, inv = self.model.get_elements_times_and_streams(depths, latitudes, longitudes)
                 
-                if len(self.view.elements_model.get()) == 0:
-                    model = None
-                else:
-                    model = self.view.elements_model.get()
+                
+                model = self.view.elements_model.get()
                 if len(self.view.elements_phase_list.get()) == 0:
                     phase_list = []
                 else:
-                    phase_list = self.view.phase_list.get().split(',')
+                    phase_list = self.view.elements_phase_list.get().split(',')
                 
                 # I'm assuming all events are the same !!!!!!!!!!!!!!!!!!!!
                 cat = self.model.elements_database.database[self.view.selected_elements_listbox.get(0)]['cat']
                 
                 plotter.Plot(times, streams, inv, cat, model, phase_list, 
-                             plot_diff=False, xlims=None)
-            
+                             PLOT_DIFFERENCE=False, xlims=None)
+
+
     def on_press_plot_stations_button(self):
         
         try:
@@ -252,8 +252,21 @@ class Controller():
             plot_travel_times(source_depth=evt_depth, phase_list=phase_list, model=earth_model)
         except:
             tk.messagebox.showerror("Error", "Please enter the depth")
-        
-        
+
+
+    def on_press_plot_elements_traveltimes_button(self):
+        if len(self.view.elements_phase_list.get()) != 0:
+            elements_phase_list = self.view.elements_phase_list.get().split(',')
+        else:
+            tk.messagebox.showerror("Error", "Please enter phases")
+        try:
+            evt_depth = float(self.view.elements_event_depth.get())
+            earth_model = self.view.elements_model.get()
+            plot_travel_times(source_depth=evt_depth, phase_list=elements_phase_list, model=earth_model)
+        except:
+            tk.messagebox.showerror("Error", "Please enter the depth")
+
+
     def on_press_plot_earth_button(self):
         try:
             self.model.wavefield_database.selected_database
@@ -280,9 +293,36 @@ class Controller():
         plotter.Plot_3D_Earth(phase_list, earth_model, inv_selection, cat, file)
 
 
+    def on_press_plot_elements_earth_button(self):
+        try:
+            self.model.elements_database.selected_database
+        except:
+            tk.messagebox.showerror("Error", "The selected database is empty!")
+            
+        if len(self.model.elements_database.database) == 0:
+                tk.messagebox.showerror("Error", "The selected database is empty!")
+                
+        if len(self.view.elements_phase_list.get()) != 0:
+            phase_list = self.view.elements_phase_list.get().split(',')
+        else:
+            tk.messagebox.showerror("Error", "Please enter phases")
+        
+        try:
+            file = self.view.elements_CMB_txt_file.get()
+        except:
+            tk.messagebox.showerror("Error", "Please enter the path to a CMB topography txt file")
+
+        cat = self.model.elements_database.database[self.view.selected_selection_listbox.get(0)]['cat']
+        inv_selection = self.model.get_selected_inv()
+        earth_model = self.view.model.get()
+        
+        plotter.Plot_3D_Earth(phase_list, earth_model, inv_selection, cat, file)
+
+
     def on_press_elements_output_button(self):
         self.view._create_elements_output_window()
-        
+
+
     def on_press_load_elements_output(self):
         if len(self.view.elements_path.get()) == 0:
             tk.messagebox.showerror("Error", 'The path to the elements dir is empty!')

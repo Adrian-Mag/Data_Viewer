@@ -197,10 +197,10 @@ class View(tk.Tk):
                              command=self.controller.on_press_plot_traveltimes_button) # noqa
         self.plot_traveltimes_button.grid(row=2,column=10)
         # 3D Earth plot button
-        self.plot_traveltimes_button = tk.Button(self.graph_control_frame,
+        self.plot_Earth_button = tk.Button(self.graph_control_frame,
                                                 text="Plot Earth",
                              command=self.controller.on_press_plot_earth_button) # noqa
-        self.plot_traveltimes_button.grid(row=3,column=10)
+        self.plot_Earth_button.grid(row=3,column=10)
 
         # Min freq
         self.freq_min = tk.StringVar()
@@ -486,13 +486,23 @@ class View(tk.Tk):
         self.elements_control_frame.columnconfigure(6, weight=1)
         
         
+        
         # Buttons 
         # Plot
         self.plot_elements_button = tk.Button(self.elements_control_frame,
                                                    text='Plot',
                                                    command=self.controller.on_press_plot_elements_button)
         self.plot_elements_button.grid(row=0, column=6)
-        
+        # Traveltime plot button
+        self.plot_elements_traveltimes_button = tk.Button(self.elements_control_frame,
+                                                text="Plot travel times 2",
+                             command=self.controller.on_press_plot_elements_traveltimes_button) # noqa
+        self.plot_elements_traveltimes_button.grid(row=2,column=6)
+        # 3D Earth plot button
+        self.plot_elements_Earth_button = tk.Button(self.elements_control_frame,
+                                                text="Plot Earth",
+                             command=self.controller.on_press_plot_elements_earth_button) # noqa
+        self.plot_elements_Earth_button.grid(row=3,column=6)
         
         # Min freq
         self.elements_freq_min = tk.StringVar()
@@ -569,3 +579,23 @@ class View(tk.Tk):
         )
         self.elements_phase_list_entry.grid(row=1, column=5)
         tk.Label(self.elements_control_frame, text='Phase list').grid(row=1,column=4)
+        # Event depth
+        self.elements_event_depth = tk.StringVar()
+        self.elements_event_depth_entry = tk.Entry(
+            self.elements_control_frame,
+            justify='left',
+            width=10,
+            textvariable=self.elements_event_depth,
+        )
+        self.elements_event_depth_entry.grid(row=2, column=5)
+        tk.Label(self.elements_control_frame, text='Event depth').grid(row=2,column=4)
+        # CMB txt file
+        self.elements_CMB_txt_file = tk.StringVar()
+        self.elements_CMB_txt_file_entry = tk.Entry(
+            self.elements_control_frame,
+            justify='left',
+            width=10,
+            textvariable=self.elements_CMB_txt_file,
+        )
+        self.elements_CMB_txt_file_entry.grid(row=3, column=5)
+        tk.Label(self.elements_control_frame, text='CMB txt file').grid(row=3,column=4)

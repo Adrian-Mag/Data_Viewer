@@ -46,7 +46,7 @@ def dummy_Plot(time: np.ndarray, data:np.ndarray) -> plt.figure:
 
 
 def Plot(times: np.array, streams: obspy.Stream, inv_selection: obspy.Inventory, 
-         cat: obspy.Catalog, model: obspy.taup.tau.TauPyModel, phase_list: list, plot_diff: bool, xlims=None) -> plt.figure:
+         cat: obspy.Catalog, model: obspy.taup.tau.TauPyModel, phase_list: list, PLOT_DIFFERENCE: bool = False, xlims=None) -> plt.figure:
     """Builds figure for plotting wave data time series
 
     Args:
@@ -56,15 +56,23 @@ def Plot(times: np.array, streams: obspy.Stream, inv_selection: obspy.Inventory,
         cat (obspy.Catalog): catalogue of events
         model (obspy.taup.tau.TauPyModel): earth reference model from taup
         phase_list (list): list of strings of phases eg PcP,PP,...
+        PLOT_DIFFERENCE (bool): set to true if you want to plot the difference between two datasets
+                                instead of plotting them on top of eachother
         xlims (list, optional): list with min and max time limits for plotting. Defaults to None.
 
     Returns:
         plt.figure: figure
     """
 
+    ########################################
+    # ORDER STATIONS BY DISTANCE FROM ORIGIN
+    ########################################
+
+    # Initialize lists that contain the IDs of the stations and the distances between
+    # each station and the event
     ids = []
     distances = []
-    # order stations by distance from origin
+    
     
     # IMPLEMENT SOMETHING THAT CHECKS IF THE SELECTED DATA HAVE THE SAME
     # SOURCE CAT. IF THEY DON'T THEN THEY SHOULD NOT BE PLOTTED TOGETHER!!!!
@@ -74,6 +82,7 @@ def Plot(times: np.array, streams: obspy.Stream, inv_selection: obspy.Inventory,
     evt_lon = cat[0].origins[0].longitude
     evt_depth = cat[0].origins[0].depth
     
+    # Go trace by trace and find the ID and source-receiver distance
     for trace in streams[0]:
         id = str(trace.stats.network) + '.' + str(trace.stats.station) + \
              '.' + str(trace.stats.location) + '.' + str(trace.stats.channel)
@@ -94,6 +103,10 @@ def Plot(times: np.array, streams: obspy.Stream, inv_selection: obspy.Inventory,
     tuples = zip(*sorted_pairs)
     distances, ids = [ list(tuple) for tuple in  tuples]
 
+    #################################
+    # CUSTOMIZE TAUP PICKS APPEARENCE
+    #################################
+
     # Create a colormap for the Taup picks
     cmap = get_cmap('Paired', lut=12)
     COLORS = ['#%02x%02x%02x' % tuple(int(col * 255) for col in cmap(i)[:3])
@@ -101,21 +114,30 @@ def Plot(times: np.array, streams: obspy.Stream, inv_selection: obspy.Inventory,
     COLORS = COLORS[1:][::2][:-1] + COLORS[::2][:-1]
 
     # Format the strings in the phase list to be of type "" instead of ''
+    # otherwise the taup implementation in obspy will freak out
     phase_list = ["{0}".format(elem) for elem in phase_list]
     model = TauPyModel(model)
     
     # Colors for waveforms 
     plot_colors = ['black', 'red', 'navy', 'limegreen', 'yellow', 'orange', 'magenta']
 
-    # Find master time
+    ##################
+    # FIND MASTER TIME
+    ##################
+
     t_max = max([max(t) for time in times for t in time])    # find earliest time data point
     t_min = min([min(t) for time in times for t in time])        # find latest time data point
     delta_t_min = min([t[1] - t[0] for time in times for t in time])    # find smallest delta t
     master_time = np.arange(t_min, t_max, delta_t_min)
     
+    ######
+    # PLOT
+    ######
+
     fig_seismographs, ax = plt.subplots(len(streams[0]), sharex=True, figsize=(8,4), dpi=200)
+    
     # go over data sets
-    if plot_diff == 1:
+    if PLOT_DIFFERENCE is True:
         stream1 = streams[0]
         stream2 = streams[1]
         plot_index = -1

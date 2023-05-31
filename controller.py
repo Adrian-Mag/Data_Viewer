@@ -139,11 +139,11 @@ class Controller():
     def on_press_plot_button(self):
         # Check if there is any database selected for plotting 
         try:
-            self.model.wavefield_database.selected_database
+            self.model.wavefield_database.database
         except:
-            tk.messagebox.showerror("Error", "The selected database is empty!")
+            tk.messagebox.showerror("Error", "The database is empty!")
             
-        if len(self.model.wavefield_database.database) == 0:
+        if len(self.model.wavefield_database.selected_database) == 0:
                 tk.messagebox.showerror("Error", "The selected database is empty!")
                 
         else:
@@ -182,12 +182,14 @@ class Controller():
     def on_press_plot_elements_button(self):
         # Check if there is any database selected for plotting 
         try:
-            self.model.elements_database.selected_database
+            self.model.elements_database.database
         except:
-            tk.messagebox.showerror("Error", "The selected database is empty!")
+            tk.messagebox.showerror("Error", "The database is empty!")
+            return 
             
-        if len(self.model.elements_database.database) == 0:
+        if len(self.model.elements_database.selected_database) == 0:
                 tk.messagebox.showerror("Error", "The selected database is empty!")
+                return
         else:
             
             ERROR_FOUND = False

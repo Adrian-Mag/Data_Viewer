@@ -13,14 +13,17 @@ import plotter
 class View(tk.Tk):
     """ Docs
     """
-    PAD = 10
+    PAD = 10 # Window padding
+
 
     def __init__(self, controller):
 
         super().__init__()
 
+        # Link view to controller
         self.controller = controller
 
+        # Configure main window
         self.title('Post processing')
         self.grid_rowconfigure(0,weight=1)
         self.grid_rowconfigure(1,weight=1)
@@ -28,15 +31,17 @@ class View(tk.Tk):
         self.grid_columnconfigure(0,weight=1)
         self.geometry('{}x{}'.format(1080, 1920))
         
+        # Create the frames for the station window
         self._make_databases_frame()
         self._make_add_databases_frame()
         self._make_review_databases_frame()
         self._make_graph_control_frame()
         self._make_other_buttons_frame()
-        #self._make_crosscorrelation_control_frame()
+
 
     def main(self):
         self.mainloop()
+
 
 ################
 # DATABASE FRAME
@@ -60,7 +65,8 @@ class View(tk.Tk):
         self.add_databases_frame.columnconfigure(1, weight=1)
         self.add_databases_frame.columnconfigure(2, weight=1)
         
-        # Create entry for path to mseed file
+        # Create entry for path to mseed file, catalogue, inventory, and data
+        # type
         self.wavefield_path = tk.StringVar()
         self.cat_path = tk.StringVar()
         self.inv_path = tk.StringVar()
@@ -95,15 +101,14 @@ class View(tk.Tk):
         tk.Label(self.add_databases_frame, text='Path to inventory file').grid(row=2,column=0)
         # Drop down menu for data type        
         self.data_type.set('simulation')
-        self.data_type_options = tk.OptionMenu(self.add_databases_frame, self.data_type, "real", "simulation", "instaseis").grid(row=3, column=1)
+        self.data_type_options = tk.OptionMenu(self.add_databases_frame, self.data_type, 
+                                               "real", "simulation", "instaseis").grid(row=3, column=1)
         tk.Label(self.add_databases_frame, text='Data type').grid(row=3,column=0)
-
         # Create button to load mseed file
         self.load_wavefield = tk.Button(self.add_databases_frame,
                                                 text="Load wavefield",
                              command=self.controller.on_press_load_wavefield) # noqa
         self.load_wavefield.grid(row=0,column=2)
-        
         # auto load button (searches for cat and inv by itself)
         self.auto_load_wavefield = tk.Button(self.add_databases_frame,
                                                 text="Auto load wavefield",
@@ -136,13 +141,13 @@ class View(tk.Tk):
                              command=self.controller.on_press_select_wavefield) # noqa
         self.select_wavefield.grid(row=0,column=0)
         
-        self.delete_wavefield = tk.Button(self.database_buttons_frame,
-                                                text="Delete wavefield",
-                             command=self.controller.on_press_delete_wavefield) # noqa
-        self.delete_wavefield.grid(row=0,column=1)
-
+        # Button for removing wavefield
+        self.remove_wavefield = tk.Button(self.database_buttons_frame,
+                                                text="Remove wavefield",
+                             command=self.controller.on_press_remove_wavefield) # noqa
+        self.remove_wavefield.grid(row=0,column=1)
         
-        
+        # A text saying this is selection area
         tk.Label(self.review_databases_frame, text='Selection').grid(row=0,column=1)
 
         # Selection listbox
@@ -448,10 +453,10 @@ class View(tk.Tk):
                                                    text='Select wavefield',
                                                    command=self.controller.on_press_select_elements_wavefield)
         self.select_elements_wavefield.grid(row=2, column=0)
-        self.delete_elements_wavefield = tk.Button(self.elements_review_database_buttons_subframe,
-                                                   text='Delete wavefield',
-                                                   command=self.controller.on_press_delete_elements_wavefield)
-        self.delete_elements_wavefield.grid(row=2, column=1)
+        self.remove_elements_wavefield = tk.Button(self.elements_review_database_buttons_subframe,
+                                                   text='Remove wavefield',
+                                                   command=self.controller.on_press_remove_elements_wavefield)
+        self.remove_elements_wavefield.grid(row=2, column=1)
         
         # Selected Database listbox
         tk.Label(self.elements_review_database_frame, text='Selected Database').grid(row=0,column=1)
@@ -484,8 +489,6 @@ class View(tk.Tk):
         self.elements_control_frame.columnconfigure(4, weight=1)
         self.elements_control_frame.columnconfigure(5, weight=1)
         self.elements_control_frame.columnconfigure(6, weight=1)
-        
-        
         
         # Buttons 
         # Plot

@@ -1,5 +1,5 @@
 import sys
-sys.path.append('/home/users/scro4564/PhD/AxiSEM3D_Data_Handler')
+sys.path.append('/disks/data/PhD/AxiSEM3D_Data_Handler')
 from element_output import element_output
 import obspy 
 

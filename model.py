@@ -7,7 +7,7 @@ from obspy.core.stream import Stream
 from obspy.core.event import Catalog, Event, Origin, FocalMechanism, MomentTensor, Tensor
 from obspy.geodetics import FlinnEngdahl
 import sys
-sys.path.append('/home/adrian/PhD/AxiSEM3D/Output_Handlers')
+sys.path.append('/disks/data/PhD/AxiSEM3D_Data_Handler')
 from element_output import element_output
 import numpy as np
 from obspy import UTCDateTime

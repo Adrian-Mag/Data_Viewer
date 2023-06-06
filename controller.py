@@ -299,32 +299,35 @@ class Controller():
 
 
     def on_press_plot_elements_earth_button(self):
-        
-        # Error handling
+        NO_WAVEFIELD_SELECTED = False
         try:
-            self.model.elements_database.database
+            self.model.elements_database.selected_database
         except:
-            tk.messagebox.showerror("Error", "The database is empty!")
-            
-        if len(self.model.elements_database.selected_database) == 0:
-                tk.messagebox.showerror("Error", "The selected database is empty!")
-                
-        if len(self.view.elements_phase_list.get()) != 0:
+            NO_WAVEFIELD_SELECTED = True
+        if ((NO_WAVEFIELD_SELECTED is True)
+            or (len(self.view.elements_event_depth.get()) == 0) 
+            or (len(self.view.elements_phase_list.get()) == 0)):
+            PLOT_RAYS = False
+            phase_list = None
+            cat = None
+            inv_selection = None
+            earth_model = None
+        else: 
+            PLOT_RAYS = True
             phase_list = self.view.elements_phase_list.get().split(',')
-        else:
-            tk.messagebox.showerror("Error", "Please enter phases")
-            
+            cat = self.model.elements_database.database[self.view.selected_elements_listbox.get(0)]['cat']
+            depths = [float(depth) for depth in self.view.station_depth.get().split(',')]
+            latitudes = [float(latitude) for latitude in self.view.station_latitude.get().split(',')]
+            longitudes = [float(longitude) for longitude in self.view.station_longitude.get().split(',')]
+            _, _, inv_selection = self.model.get_elements_times_and_streams(depths, latitudes, longitudes)
+            earth_model = self.view.elements_model.get()
+
         try:
             file = self.view.elements_CMB_txt_file.get()
         except:
             tk.messagebox.showerror("Error", "Please enter the path to a CMB topography txt file")
-
-        # Iplementation
-        cat = self.model.elements_database.database[self.view.selected_selection_listbox.get(0)]['cat']
-        inv_selection = self.model.get_selected_inv()
-        earth_model = self.view.model.get()
         
-        plotter.Plot_3D_Earth(phase_list, earth_model, inv_selection, cat, file)
+        plotter.Plot_3D_Earth(phase_list, earth_model, inv_selection, cat, file, PLOT_RAYS)
 
 
     def on_press_elements_output_button(self):

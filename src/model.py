@@ -1,5 +1,4 @@
-from wavefield_db import Wavefield_database
-from elements_db import Elements_database
+# Libraries
 from obspy import read, read_inventory, read_events
 import os
 from obspy.core.inventory import Inventory, Network, Station, Channel
@@ -7,11 +6,15 @@ from obspy.core.stream import Stream
 from obspy.core.event import Catalog, Event, Origin, FocalMechanism, MomentTensor, Tensor
 from obspy.geodetics import FlinnEngdahl
 import sys
-sys.path.append('/home/adrian/PhD/AxiSEM3D/Output_Handlers')
+sys.path.append('/disks/data/PhD/AxiSEM3D_Data_Handler')
 from element_output import element_output
-import numpy as np
 from obspy import UTCDateTime
 import yaml
+
+# In house files
+from wavefield_db import WavefieldDatabase
+from elements_db import ElementsDatabase
+
 
 class Model:
     
@@ -19,52 +22,54 @@ class Model:
         self.controller = controller
         self.wavefield_database = None
         self.elements_database = None
-        
+
+
     def create_database(self):
-        self.wavefield_database = Wavefield_database()
-    
+        self.wavefield_database = WavefieldDatabase()
+
+
     def create_elements_database(self):
-        self.elements_database = Elements_database()
-    
+        self.elements_database = ElementsDatabase()
+
+
     def load_wavefield(self, wavefield_path, cat_path, inv_path, data_type):
-        
         name = wavefield_path.split('/')[-1]
         stream = read(wavefield_path)
         cat = read_events(cat_path)
         inv = read_inventory(inv_path)
-        self.wavefield_database.add_to_database(name, stream, cat, inv, data_type)
-        
+        self.wavefield_database.add_to_database(name, stream, cat, 
+                                                inv, data_type)
+
+
     def load_elements(self, elements_path):
         name = elements_path.split('/')[-1]
         element_object = element_output(elements_path, grid_format=[0, 2, 4])
-        
         # We need to crate a catalogue on the spot for element outputs
-        cat = self.create_elements_cat(elements_path)
-        
-        self.elements_database.add_to_database(elements_path, name, element_object, cat)
+        cat = self._create_elements_cat(elements_path)
+        self.elements_database.add_to_database(elements_path, name, 
+                                               element_object, cat)
 
-    def create_elements_cat(self, elements_path):
-        # Create a cat
+
+    def _create_elements_cat(self, elements_path):
+        # Create a catalogue
         source_path = elements_path + '/input/inparam.source.yaml'
         with open(source_path, 'r') as file:
                 source_yaml = yaml.load(file, Loader=yaml.FullLoader)
-                
                 for source in source_yaml['list_of_sources']:
                     for items in source.items():
                         cat = Catalog()
-                        
                         event = Event()
-                                        
                         origin = Origin()
                         
-                        origin.time = UTCDateTime("1970-01-01T00:00:00.0Z") # set as the default in obspy
+                        origin.time = UTCDateTime("1970-01-01T00:00:00.0Z") # default in obspy
                         origin.latitude = items[1]['location']['latitude_longitude'][0]
                         origin.longitude = items[1]['location']['latitude_longitude'][1]
                         origin.depth = items[1]['location']['depth']
                         origin.depth_type = "operator assigned"
                         origin.evaluation_mode = "manual"
                         origin.evaluation_status = "preliminary"
-                        origin.region = FlinnEngdahl().get_region(origin.longitude, origin.latitude)
+                        origin.region = FlinnEngdahl().get_region(origin.longitude, 
+                                                                  origin.latitude)
                         
                         m_rr = items[1]['mechanism']['data'][0]
                         m_tt = items[1]['mechanism']['data'][1]
@@ -74,20 +79,15 @@ class Model:
                         m_tp = items[1]['mechanism']['data'][5]
                         
                         focal_mechanisms = FocalMechanism()
-                        
                         tensor = Tensor()
-                        
                         moment_tensor = MomentTensor()
-                        
                         tensor.m_rr = m_rr
                         tensor.m_tt = m_tt
                         tensor.m_pp = m_pp
                         tensor.m_rt = m_rt
                         tensor.m_rp = m_rp
                         tensor.m_tp = m_tp
-                        
                         moment_tensor.tensor = tensor
-                        
                         focal_mechanisms.moment_tensor = moment_tensor
                                             
                         # make associations, put everything together
@@ -99,7 +99,6 @@ class Model:
     
     
     def auto_load_wavefield(self, wavefield_path, data_type):
-        
         name = wavefield_path.split('/')[-1]
         stream = read(wavefield_path)
         
@@ -107,36 +106,41 @@ class Model:
         dir_path = ''
         for element in wavefield_path.split('/')[0:-1]:
             dir_path += element + '/'
-        
+        # Read events catalogue
         for file in os.listdir(dir_path):
             if file.endswith('cat.xml'):
                 cat = read_events(os.path.join(dir_path, file))
                 break
-        
+        # Read inventory
         for file in os.listdir(dir_path):
             if file.endswith('inv.xml'):
                 inv = read_inventory(os.path.join(dir_path, file))
                 break
-            
+
         self.wavefield_database.add_to_database(name, stream, cat, inv, data_type)
-        
+
+
     def add_selection(self, name):
         self.wavefield_database.add_to_selected_database(name)
-        
+
+
     def add_elements_selection(self, name):
         self.elements_database.add_to_selected_database(name)
-        
+
+
     def remove_selection(self, name):
         self.wavefield_database.remove_from_selected_database(name)
-        
+
+
     def remove_elements_selection(self, name):
         self.elements_database.remove_from_selected_database(name)
-        
-    def delete_wavefield(self, name):
-        self.wavefield_database.delete_from_database(name)
-        
+
+
+    def remove_wavefield(self, name):
+        self.wavefield_database.remove_from_database(name)
+
+
     def get_times_and_streams(self):
-        
         times = []
         streams = []
         for element in self.wavefield_database.selected_database:
@@ -169,7 +173,6 @@ class Model:
                                     maxlatitude=maxlatitude[index],
                                     minlongitude=minlongitude[index],
                                     maxlongitude=maxlongitude[index]))
-            
             stream_geo_selection = stream.select(inventory=inv_selection)
             
             stream_net_selection = Stream()
@@ -211,18 +214,15 @@ class Model:
             # finally put back in the main stream the selected traces
             stream = stream_chn_selection
             
-            
             # Bandpass   
             if len(self.controller.view.freq_min.get()) == 0:
                 freq_min = None
             else:
                 freq_min = float(self.controller.view.freq_min.get())
-
             if len(self.controller.view.freq_max.get()) == 0:
                 freq_max = None
             else:
                 freq_max = float(self.controller.view.freq_max.get())
-            
             if freq_min is not None and freq_max is not None:
                 stream.filter('bandpass', freqmin=freq_min, freqmax=freq_max)
             elif freq_min is None and freq_max is not None: 
@@ -230,54 +230,47 @@ class Model:
             elif freq_min is not None and freq_max is None:
                 stream.filter('highpass', freq=freq_min)
             
-            
             times.append(self._get_time(data_type, stream, cat))
             streams.append(stream)
 
         return [times, streams]
-    
-    
+
+
     def get_elements_times_and_streams(self, depths, latitudes, longitudes):
-        
         # Get times and streams
-        
         times = []
         streams = []
 
-        R_Earth = 6371
-
         for element in self.elements_database.selected_database:
-            
             elements_path = self.elements_database.database[element]['elements_path']
             element_object = self.elements_database.database[element]['element_object']
             channel_time = element_object.data_time
+
             traces = Stream()
             inv = Inventory(
                 networks=[],
                 source="Ad-hoc inventory for elements output")
-            
+
             time = []
-            
+
             for i, depth in enumerate(depths):
-                
                 # Create point in geographical coords to be fed to element_output.py
                 latitude = float(latitudes[i])
                 longitude = float(longitudes[i])
-            
                 # Get wave data 
                 wave_data = element_object.stream(depth * 1e3, latitude, longitude)
                 for trace in wave_data:
                     traces.append(trace)
                 
-                ##################
+                ################
                 # FORM INVENTORY
-                ##################
+                ################
                 
                 net_code = wave_data[0].id.split('.')[0]
                 sta_code = wave_data[0].id.split('.')[1]
-                
-                inparam_output_path = elements_path + '/input/inparam.output.yaml'
+
                 # Get coordinates of the stations channels (RTZ, etc)
+                inparam_output_path = elements_path + '/input/inparam.output.yaml'
                 with open(inparam_output_path, 'r') as file:
                     output_yaml = yaml.load(file, Loader=yaml.FullLoader)
                     for station_grid in output_yaml['list_of_element_groups']:
@@ -368,7 +361,6 @@ class Model:
         return time                    
         
     def get_selected_inv(self):
-        
         # Geographical choice
         if len(self.controller.view.min_lat.get()) == 0:
             minlatitude = [-90]
@@ -390,17 +382,15 @@ class Model:
         # Get the inventory of one of the selections(they should all have the same stations)
         element = self.wavefield_database.selected_database[0]
         inv = self.wavefield_database.database[element]['inv']
-
         inv_geo_selection = Inventory()
         for index in range(len(minlatitude)):
             inv_geo_selection.__iadd__(inv.select(minlatitude=minlatitude[index],
                                 maxlatitude=maxlatitude[index],
                                 minlongitude=minlongitude[index],
                                 maxlongitude=maxlongitude[index]))
-
         inv_selection = Inventory()
+
         # Station choice
-        
         if len(self.controller.view.stations.get()) == 0:
             inv_selection = inv_geo_selection.copy()
         else:

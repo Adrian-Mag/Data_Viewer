@@ -1,7 +1,7 @@
 import obspy 
 
 
-class Wavefield_database:
+class WavefieldDatabase:
     """A class for the database. This class is instanciated 
     when the first database entry is loaded into the program.
     The database is at its core a dictionary. The key of each 
@@ -16,9 +16,11 @@ class Wavefield_database:
         self.database = {}
         self.selected_database = []
 
-    def add_to_database(self, name: str, stream: obspy.Stream, cat: obspy.Catalog, 
-                        inv: obspy.Inventory, data_type: str):        
-        self.database[name] = {'stream': stream, 'cat': cat, 'inv': inv, 'type': data_type}
+    def add_to_database(self, name: str, stream: obspy.Stream,  
+                        cat: obspy.Catalog, inv: obspy.Inventory, 
+                        data_type: str):        
+        self.database[name] = {'stream': stream, 'cat': cat, 
+                               'inv': inv, 'type': data_type}
         
     def add_to_selected_database(self, name):
         self.selected_database.append(name)
@@ -26,7 +28,7 @@ class Wavefield_database:
     def remove_from_selected_database(self, name):
         self.selected_database.remove(name)
         
-    def delete_from_database(self, name):
+    def remove_from_database(self, name):
         if name in self.selected_database:
             self.remove_from_selected_database(name)
         self.database.pop(name)

@@ -1,8 +1,11 @@
+# Libraries
 import tkinter as tk
+from obspy.taup import plot_travel_times
+# In house files
 from view import View
 from model import Model
 import plotter
-from obspy.taup import plot_travel_times
+
 
 class Controller():
     """
@@ -122,12 +125,12 @@ class Controller():
                 self.view.selection_listbox.delete(i)
 
 
-    def on_press_delete_wavefield(self):
+    def on_press_remove_wavefield(self):
         if len(self.view.listbox.curselection()) == 0:
             tk.messagebox.showerror("Error", "Select a database to be deleted!")
         else:
             for i in self.view.listbox.curselection():
-                self.model.wavefield_database.delete_from_database(self.view.listbox.get(i))
+                self.model.wavefield_database.remove_from_database(self.view.listbox.get(i))
                 
                 for j, selection_listbox_entry in enumerate(self.view.selection_listbox.get(0, tk.END)):
                     if selection_listbox_entry == self.view.listbox.get(i):
@@ -179,6 +182,7 @@ class Controller():
             plotter.Plot(times, streams, inv_selection, cat, model, phase_list, 
                                     self.view.difference_checkbox_state.get(), xlims)
 
+
     def on_press_plot_elements_button(self):
         # Check if there is any database selected for plotting 
         try:
@@ -212,21 +216,20 @@ class Controller():
                 # get the data
                 times, streams, inv = self.model.get_elements_times_and_streams(depths, latitudes, longitudes)
                 
-                if len(self.view.elements_model.get()) == 0:
-                    model = None
-                else:
-                    model = self.view.elements_model.get()
+                
+                model = self.view.elements_model.get()
                 if len(self.view.elements_phase_list.get()) == 0:
                     phase_list = []
                 else:
-                    phase_list = self.view.phase_list.get().split(',')
+                    phase_list = self.view.elements_phase_list.get().split(',')
                 
                 # I'm assuming all events are the same !!!!!!!!!!!!!!!!!!!!
                 cat = self.model.elements_database.database[self.view.selected_elements_listbox.get(0)]['cat']
                 
                 plotter.Plot(times, streams, inv, cat, model, phase_list, 
-                             plot_diff=False, xlims=None)
-            
+                             PLOT_DIFFERENCE=False, xlims=None)
+
+
     def on_press_plot_stations_button(self):
         
         try:
@@ -252,37 +255,88 @@ class Controller():
             plot_travel_times(source_depth=evt_depth, phase_list=phase_list, model=earth_model)
         except:
             tk.messagebox.showerror("Error", "Please enter the depth")
-        
-        
+
+
+    def on_press_plot_elements_traveltimes_button(self):
+        if len(self.view.elements_phase_list.get()) != 0:
+            elements_phase_list = self.view.elements_phase_list.get().split(',')
+        else:
+            tk.messagebox.showerror("Error", "Please enter phases")
+        try:
+            evt_depth = float(self.view.elements_event_depth.get())
+            earth_model = self.view.elements_model.get()
+            plot_travel_times(source_depth=evt_depth, phase_list=elements_phase_list, model=earth_model)
+        except:
+            tk.messagebox.showerror("Error", "Please enter the depth")
+
+
     def on_press_plot_earth_button(self):
+        NO_WAVEFIELD_SELECTED = False
         try:
             self.model.wavefield_database.selected_database
         except:
-            tk.messagebox.showerror("Error", "The selected database is empty!")
+            NO_WAVEFIELD_SELECTED = True
             
-        if len(self.model.wavefield_database.database) == 0:
-                tk.messagebox.showerror("Error", "The selected database is empty!")
-                
-        if len(self.view.phase_list.get()) != 0:
+        if ((NO_WAVEFIELD_SELECTED is True)
+            or (len(self.view.event_depth.get()) == 0) 
+            or (len(self.view.phase_list.get()) == 0)):
+            PLOT_RAYS = False
+            phase_list = None
+            cat = None
+            inv_selection = None
+            earth_model = None
+        else: 
+            PLOT_RAYS = True
             phase_list = self.view.phase_list.get().split(',')
-        else:
-            tk.messagebox.showerror("Error", "Please enter phases")
-        
+            cat = self.model.wavefield_database.database[self.view.selection_listbox.get(0)]['cat']
+            inv_selection = self.model.get_selected_inv()
+            earth_model = self.view.model.get()
+
         try:
             file = self.view.CMB_txt_file.get()
         except:
             tk.messagebox.showerror("Error", "Please enter the path to a CMB topography txt file")
 
-        cat = self.model.wavefield_database.database[self.view.selection_listbox.get(0)]['cat']
-        inv_selection = self.model.get_selected_inv()
-        earth_model = self.view.model.get()
         
-        plotter.Plot_3D_Earth(phase_list, earth_model, inv_selection, cat, file)
+        plotter.Plot_3D_Earth(phase_list, earth_model, inv_selection, cat, file, PLOT_RAYS)
+
+
+    def on_press_plot_elements_earth_button(self):
+        NO_WAVEFIELD_SELECTED = False
+        try:
+            self.model.elements_database.selected_database
+        except:
+            NO_WAVEFIELD_SELECTED = True
+        if ((NO_WAVEFIELD_SELECTED is True)
+            or (len(self.view.elements_event_depth.get()) == 0) 
+            or (len(self.view.elements_phase_list.get()) == 0)):
+            PLOT_RAYS = False
+            phase_list = None
+            cat = None
+            inv_selection = None
+            earth_model = None
+        else: 
+            PLOT_RAYS = True
+            phase_list = self.view.elements_phase_list.get().split(',')
+            cat = self.model.elements_database.database[self.view.selected_elements_listbox.get(0)]['cat']
+            depths = [float(depth) for depth in self.view.station_depth.get().split(',')]
+            latitudes = [float(latitude) for latitude in self.view.station_latitude.get().split(',')]
+            longitudes = [float(longitude) for longitude in self.view.station_longitude.get().split(',')]
+            _, _, inv_selection = self.model.get_elements_times_and_streams(depths, latitudes, longitudes)
+            earth_model = self.view.elements_model.get()
+
+        try:
+            file = self.view.elements_CMB_txt_file.get()
+        except:
+            tk.messagebox.showerror("Error", "Please enter the path to a CMB topography txt file")
+        
+        plotter.Plot_3D_Earth(phase_list, earth_model, inv_selection, cat, file, PLOT_RAYS)
 
 
     def on_press_elements_output_button(self):
         self.view._create_elements_output_window()
-        
+
+
     def on_press_load_elements_output(self):
         if len(self.view.elements_path.get()) == 0:
             tk.messagebox.showerror("Error", 'The path to the elements dir is empty!')
@@ -335,12 +389,12 @@ class Controller():
                 self.view.selected_elements_listbox.delete(i)
     
     
-    def on_press_delete_elements_wavefield(self):
+    def on_press_remove_elements_wavefield(self):
         if len(self.view.elements_listbox.curselection()) == 0:
             tk.messagebox.showerror("Error", "Select a database to be deleted!")
         else:
             for i in self.view.elements_listbox.curselection():
-                self.model.elements_database.delete_from_database(self.view.elements_listbox.get(i))
+                self.model.elements_database.remove_from_database(self.view.elements_listbox.get(i))
                 
                 for j, selected_listbox_entry in enumerate(self.view.selected_elements_listbox.get(0, tk.END)):
                     if selected_listbox_entry == self.view.elements_listbox.get(i):

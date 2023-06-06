@@ -38,7 +38,6 @@ def dummy_Plot(time: np.ndarray, data:np.ndarray) -> plt.figure:
         plt.figure: figure
     """    
     fig, axs = plt.subplots(2)
-
     axs[0].plot(time[0], data[0])
     axs[1].plot(time[1], data[1])
 
@@ -68,14 +67,13 @@ def Plot(times: np.array, streams: obspy.Stream, inv_selection: obspy.Inventory,
     # ORDER STATIONS BY DISTANCE FROM ORIGIN
     ########################################
 
-    # Initialize lists that contain the IDs of the stations and the distances between
-    # each station and the event
+    # Initialize lists that contain the IDs of the stations and the distances
+    # between each station and the event
     ids = []
     distances = []
     
-    
-    # IMPLEMENT SOMETHING THAT CHECKS IF THE SELECTED DATA HAVE THE SAME
-    # SOURCE CAT. IF THEY DON'T THEN THEY SHOULD NOT BE PLOTTED TOGETHER!!!!
+    # IMPLEMENT SOMETHING THAT CHECKS IF THE SELECTED DATA HAVE THE SAME SOURCE
+    # CAT. IF THEY DON'T THEN THEY SHOULD NOT BE PLOTTED TOGETHER!!!!
     
     # get event location
     evt_lat = cat[0].origins[0].latitude
@@ -84,8 +82,8 @@ def Plot(times: np.array, streams: obspy.Stream, inv_selection: obspy.Inventory,
     
     # Go trace by trace and find the ID and source-receiver distance
     for trace in streams[0]:
-        id = str(trace.stats.network) + '.' + str(trace.stats.station) + \
-             '.' + str(trace.stats.location) + '.' + str(trace.stats.channel)
+        id = str(trace.stats.network) + '.' + str(trace.stats.station) \
+                + '.' + str(trace.stats.location) + '.' + str(trace.stats.channel)
         # select the part of the inventory that will be plotted here
         inv_selected = inv_selection.select(network=trace.stats.network, 
                                             station=trace.stats.station, 
@@ -135,7 +133,6 @@ def Plot(times: np.array, streams: obspy.Stream, inv_selection: obspy.Inventory,
     ######
 
     fig_seismographs, ax = plt.subplots(len(streams[0]), sharex=True, figsize=(8,4), dpi=200)
-    
     # go over data sets
     if PLOT_DIFFERENCE is True:
         stream1 = streams[0]
@@ -335,7 +332,7 @@ def Plot(times: np.array, streams: obspy.Stream, inv_selection: obspy.Inventory,
 
 
 def Plot_3D_Earth(phase_list: list, earth_model: str, inv_selection: obspy.Inventory,
-               cat: obspy.Catalog, file: str):
+                  cat: obspy.Catalog, file: str, PLOT_RAYS: bool = False):
     """Plots a 3D interactive Earth model that shows Earth's surface
     , CMB topography, the source and stations locations, as well as the 
     paths of the chosen phases.
@@ -350,7 +347,7 @@ def Plot_3D_Earth(phase_list: list, earth_model: str, inv_selection: obspy.Inven
     Returns:
         Nothing: Just plots
     """    
-    # Define the lat lon grid 
+    # Define the lat lon grid (must match data file)
     lat = np.arange(-90, 90.01, 1)*np.pi/180
     lon = np.arange(-180, 180.01, 1)*np.pi/180
     LON, LAT = np.meshgrid(lon, lat)
@@ -371,14 +368,11 @@ def Plot_3D_Earth(phase_list: list, earth_model: str, inv_selection: obspy.Inven
         CMB[-1, :] = data[nrow - nlon:nrow].sum() / nlon
         for i in range(1, nlat):
             CMB[i, :] = data[i * nlon:i * nlon + nlon]
-
     else:
          CMB = np.ones((nlat, nlon))
-
     
     # Construct CMB and Surface matrices
     R_cmb = 3480
-    
     R = CMB + R_cmb
     R_surface = 6371 * np.ones(np.shape(CMB))
 
@@ -391,22 +385,9 @@ def Plot_3D_Earth(phase_list: list, earth_model: str, inv_selection: obspy.Inven
     Y_surface = R_surface * np.cos(LAT) * np.sin(LON)
     Z_surface = R_surface * np.sin(LAT)
 
-    # Get location of earthquake 
-    evt_depth = cat[0].origins[0].depth
-    evt_lat = np.deg2rad(cat[0].origins[0].latitude)
-    evt_lon = np.deg2rad(cat[0].origins[0].longitude)
-    evt_lat_deg = cat[0].origins[0].latitude
-    evt_lon_deg = cat[0].origins[0].longitude
-    evt_rad = (6371000 - evt_depth)/1000
-    X_evt = evt_rad * np.cos(evt_lat) * np.cos(evt_lon)
-    Y_evt = evt_rad * np.cos(evt_lat) * np.sin(evt_lon)
-    Z_evt = evt_rad * np.sin(evt_lat)
-    
     # plot
-   
     # create colormap
     N = len(CMB.flatten()) # Number of points
-    ones = np.ones(N)
     scalars = np.arange(N).reshape(CMB.shape[0], CMB.shape[1]) # Key point: set an integer for each point
 
     CMB_neg = CMB.copy()
@@ -428,48 +409,59 @@ def Plot_3D_Earth(phase_list: list, earth_model: str, inv_selection: obspy.Inven
     CMB_surface.module_manager.scalar_lut_manager.lut.table = colors
     # Plot surface
     Surface = mlab.mesh(X_surface, Y_surface, Z_surface, color=(1,1,1), opacity=0.2)    
-    # Plot source
-    mlab.points3d(X_evt, Y_evt, Z_evt, scale_factor=100, color=(1,0,0), opacity=1)
-    # Plot stations
-    earth_model = TauPyModel(model=earth_model)
-    phase_list = ["{0}".format(elem) for elem in phase_list]
-    for net in inv_selection:
-        for sta in net:
-            sta_lat = np.deg2rad(sta.latitude)
-            sta_lon = np.deg2rad(sta.longitude)
-            sta_lat_deg = sta.latitude
-            sta_lon_deg = sta.longitude
-            sta_rad = 6371
-            X_sta = sta_rad * np.cos(sta_lat) * np.cos(sta_lon)
-            Y_sta = sta_rad * np.cos(sta_lat) * np.sin(sta_lon)
-            Z_sta = sta_rad * np.sin(sta_lat)
-            mlab.points3d(X_sta, Y_sta, Z_sta, scale_factor=200, color=(0,1,0))
-            for phase in phase_list:
-                rays = earth_model.get_ray_paths_geo(evt_depth/1000, 
-                                                    evt_lat_deg, 
-                                                    evt_lon_deg, 
-                                                    sta_lat_deg, 
-                                                    sta_lon_deg, 
-                                                    phase_list=[phase], 
-                                                    resample=False, 
-                                                    ray_param_tol=1e-06)
-                if len(rays) > 0:
-                    for ray in rays:
-                        depth = []
-                        lat = []
-                        lon = []
-                        for point in ray.path:
-                            depth.append(point[3])
-                            lat.append(point[4])
-                            lon.append(point[5])
-                        r = 6371 - np.array(depth)
-                        lat = np.array(lat)
-                        lon = np.array(lon)
-                    
-                        X_ray = r * np.cos(np.deg2rad(lat)) * np.cos(np.deg2rad(lon))
-                        Y_ray = r * np.cos(np.deg2rad(lat)) * np.sin(np.deg2rad(lon))
-                        Z_ray = r * np.sin(np.deg2rad(lat))
+    if PLOT_RAYS is True:
+        # Get location of earthquake 
+        evt_depth = cat[0].origins[0].depth
+        evt_lat = np.deg2rad(cat[0].origins[0].latitude)
+        evt_lon = np.deg2rad(cat[0].origins[0].longitude)
+        evt_lat_deg = cat[0].origins[0].latitude
+        evt_lon_deg = cat[0].origins[0].longitude
+        evt_rad = (6371000 - evt_depth)/1000
+        X_evt = evt_rad * np.cos(evt_lat) * np.cos(evt_lon)
+        Y_evt = evt_rad * np.cos(evt_lat) * np.sin(evt_lon)
+        Z_evt = evt_rad * np.sin(evt_lat)
+        # Plot source
+        mlab.points3d(X_evt, Y_evt, Z_evt, scale_factor=100, color=(1,0,0), opacity=1)
+        # Plot stations
+        earth_model = TauPyModel(model=earth_model)
+        phase_list = ["{0}".format(elem) for elem in phase_list]
+        for net in inv_selection:
+            for sta in net:
+                sta_lat = np.deg2rad(sta.latitude)
+                sta_lon = np.deg2rad(sta.longitude)
+                sta_lat_deg = sta.latitude
+                sta_lon_deg = sta.longitude
+                sta_rad = 6371
+                X_sta = sta_rad * np.cos(sta_lat) * np.cos(sta_lon)
+                Y_sta = sta_rad * np.cos(sta_lat) * np.sin(sta_lon)
+                Z_sta = sta_rad * np.sin(sta_lat)
+                mlab.points3d(X_sta, Y_sta, Z_sta, scale_factor=200, color=(0,1,0))
+                for phase in phase_list:
+                    rays = earth_model.get_ray_paths_geo(evt_depth/1000, 
+                                                        evt_lat_deg, 
+                                                        evt_lon_deg, 
+                                                        sta_lat_deg, 
+                                                        sta_lon_deg, 
+                                                        phase_list=[phase], 
+                                                        resample=False, 
+                                                        ray_param_tol=1e-06)
+                    if len(rays) > 0:
+                        for ray in rays:
+                            depth = []
+                            lat = []
+                            lon = []
+                            for point in ray.path:
+                                depth.append(point[3])
+                                lat.append(point[4])
+                                lon.append(point[5])
+                            r = 6371 - np.array(depth)
+                            lat = np.array(lat)
+                            lon = np.array(lon)
                         
-                    mlab.plot3d(X_ray, Y_ray, Z_ray, color=(0.1568,0.70588,1), tube_radius=10)
+                            X_ray = r * np.cos(np.deg2rad(lat)) * np.cos(np.deg2rad(lon))
+                            Y_ray = r * np.cos(np.deg2rad(lat)) * np.sin(np.deg2rad(lon))
+                            Z_ray = r * np.sin(np.deg2rad(lat))
+                            
+                        mlab.plot3d(X_ray, Y_ray, Z_ray, color=(0.1568,0.70588,1), tube_radius=10)
 
     mlab.show()    

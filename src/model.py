@@ -1,5 +1,4 @@
-from wavefield_db import WavefieldDatabase
-from elements_db import ElementsDatabase
+# Libraries
 from obspy import read, read_inventory, read_events
 import os
 from obspy.core.inventory import Inventory, Network, Station, Channel
@@ -9,9 +8,12 @@ from obspy.geodetics import FlinnEngdahl
 import sys
 sys.path.append('/disks/data/PhD/AxiSEM3D_Data_Handler')
 from element_output import element_output
-import numpy as np
 from obspy import UTCDateTime
 import yaml
+
+# In house files
+from wavefield_db import WavefieldDatabase
+from elements_db import ElementsDatabase
 
 
 class Model:

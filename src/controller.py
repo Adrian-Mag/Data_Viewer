@@ -1,8 +1,11 @@
+# Libraries
 import tkinter as tk
+from obspy.taup import plot_travel_times
+# In house files
 from view import View
 from model import Model
 import plotter
-from obspy.taup import plot_travel_times
+
 
 class Controller():
     """

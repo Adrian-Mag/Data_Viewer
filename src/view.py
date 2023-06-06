@@ -1,4 +1,4 @@
-from tkinter import ttk
+# Libraries
 import tkinter as tk
 import matplotlib
 from matplotlib.backends.backend_tkagg import (
@@ -8,6 +8,8 @@ import matplotlib # noqa
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt  # noqa
 import numpy as np
+
+# In house files
 import plotter
 
 class View(tk.Tk):

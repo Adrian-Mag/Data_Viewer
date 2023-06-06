@@ -1,7 +1,7 @@
-import sys
-sys.path.append('/disks/data/PhD/AxiSEM3D_Data_Handler')
-from element_output import element_output
+# Libraries
 import obspy 
+# In house files
+from element_output import element_output
 
 class ElementsDatabase():
     

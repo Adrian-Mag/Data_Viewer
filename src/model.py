@@ -5,15 +5,13 @@ from obspy.core.inventory import Inventory, Network, Station, Channel
 from obspy.core.stream import Stream
 from obspy.core.event import Catalog, Event, Origin, FocalMechanism, MomentTensor, Tensor
 from obspy.geodetics import FlinnEngdahl
-import sys
-sys.path.append('/disks/data/PhD/AxiSEM3D_Data_Handler')
-from element_output import element_output
 from obspy import UTCDateTime
 import yaml
 
 # In house files
-from wavefield_db import WavefieldDatabase
-from elements_db import ElementsDatabase
+from AxiSEM3D_Data_Handler.element_output import element_output
+from .wavefield_db import WavefieldDatabase
+from .elements_db import ElementsDatabase
 
 
 class Model:

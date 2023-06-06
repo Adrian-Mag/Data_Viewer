@@ -9,9 +9,6 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt  # noqa
 import numpy as np
 
-# In house files
-import plotter
-
 class View(tk.Tk):
     """ Docs
     """

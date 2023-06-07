@@ -2,9 +2,9 @@
 import tkinter as tk
 from obspy.taup import plot_travel_times
 # In house files
-from view import View
-from model import Model
-import plotter
+from .view import View
+from .model import Model
+from .plotter import Plot, Plot_3D_Earth
 
 
 class Controller():
@@ -179,7 +179,7 @@ class Controller():
             inv_selection = self.model.get_selected_inv()
             cat = self.model.wavefield_database.database[self.view.selection_listbox.get(0)]['cat']
             
-            plotter.Plot(times, streams, inv_selection, cat, model, phase_list, 
+            Plot(times, streams, inv_selection, cat, model, phase_list, 
                                     self.view.difference_checkbox_state.get(), xlims)
 
 
@@ -226,7 +226,7 @@ class Controller():
                 # I'm assuming all events are the same !!!!!!!!!!!!!!!!!!!!
                 cat = self.model.elements_database.database[self.view.selected_elements_listbox.get(0)]['cat']
                 
-                plotter.Plot(times, streams, inv, cat, model, phase_list, 
+                Plot(times, streams, inv, cat, model, phase_list, 
                              PLOT_DIFFERENCE=False, xlims=None)
 
 
@@ -298,7 +298,7 @@ class Controller():
             tk.messagebox.showerror("Error", "Please enter the path to a CMB topography txt file")
 
         
-        plotter.Plot_3D_Earth(phase_list, earth_model, inv_selection, cat, file, PLOT_RAYS)
+        Plot_3D_Earth(phase_list, earth_model, inv_selection, cat, file, PLOT_RAYS)
 
 
     def on_press_plot_elements_earth_button(self):
@@ -330,7 +330,7 @@ class Controller():
         except:
             tk.messagebox.showerror("Error", "Please enter the path to a CMB topography txt file")
         
-        plotter.Plot_3D_Earth(phase_list, earth_model, inv_selection, cat, file, PLOT_RAYS)
+        Plot_3D_Earth(phase_list, earth_model, inv_selection, cat, file, PLOT_RAYS)
 
 
     def on_press_elements_output_button(self):
@@ -401,8 +401,3 @@ class Controller():
                         self.view.selected_elements_listbox.delete(j)
                 
                 self.view.elements_listbox.delete(i)
-                
-                
-if __name__ == '__main__':
-    calculator = Controller()
-    calculator.main()

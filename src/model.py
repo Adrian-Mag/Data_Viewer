@@ -53,9 +53,9 @@ class Model:
         source_path = elements_path + '/input/inparam.source.yaml'
         with open(source_path, 'r') as file:
                 source_yaml = yaml.load(file, Loader=yaml.FullLoader)
+                cat = Catalog()
                 for source in source_yaml['list_of_sources']:
                     for items in source.items():
-                        cat = Catalog()
                         event = Event()
                         origin = Origin()
                         
@@ -68,13 +68,20 @@ class Model:
                         origin.evaluation_status = "preliminary"
                         origin.region = FlinnEngdahl().get_region(origin.longitude, 
                                                                   origin.latitude)
-                        
-                        m_rr = items[1]['mechanism']['data'][0]
-                        m_tt = items[1]['mechanism']['data'][1]
-                        m_pp = items[1]['mechanism']['data'][2]
-                        m_rt = items[1]['mechanism']['data'][3]
-                        m_rp = items[1]['mechanism']['data'][4]
-                        m_tp = items[1]['mechanism']['data'][5]
+                        if items[1]['mechanism']['type'] == 'FORCE_VECTOR':
+                            m_rr = items[1]['mechanism']['data'][0]
+                            m_tt = items[1]['mechanism']['data'][1]
+                            m_pp = items[1]['mechanism']['data'][2]
+                            m_rt = 0
+                            m_rp = 0
+                            m_tp = 0
+                        else: 
+                            m_rr = items[1]['mechanism']['data'][0]
+                            m_tt = items[1]['mechanism']['data'][1]
+                            m_pp = items[1]['mechanism']['data'][2]
+                            m_rt = items[1]['mechanism']['data'][3]
+                            m_rp = items[1]['mechanism']['data'][4]
+                            m_tp = items[1]['mechanism']['data'][5]
                         
                         focal_mechanisms = FocalMechanism()
                         tensor = Tensor()

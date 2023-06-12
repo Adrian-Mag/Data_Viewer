@@ -9,7 +9,7 @@ from matplotlib.pyplot import get_cmap
 import obspy 
 import tkinter as tk
 from mayavi import mlab
-
+from mpl_toolkits.basemap import Basemap
 
 def _find_distance_in_degree(lat0: float, lon0: float, lat1: float, lon1:float) -> float:
     """Finds the distance in degrees between two geographical points
@@ -348,8 +348,8 @@ def Plot_3D_Earth(phase_list: list, earth_model: str, inv_selection: obspy.Inven
         Nothing: Just plots
     """    
     # Define the lat lon grid (must match data file)
-    lat = np.arange(-90, 90.01, 1)*np.pi/180
-    lon = np.arange(-180, 180.01, 1)*np.pi/180
+    lat = np.arange(-90, 90.01, 2)*np.pi/180
+    lon = np.arange(-180, 180.01, 2)*np.pi/180
     LON, LAT = np.meshgrid(lon, lat)
     nlat = len(lat)
     nlon = len(lon)
@@ -373,7 +373,7 @@ def Plot_3D_Earth(phase_list: list, earth_model: str, inv_selection: obspy.Inven
     
     # Construct CMB and Surface matrices
     R_cmb = 3480
-    R = CMB + R_cmb
+    R = CMB*100 + R_cmb
     R_surface = 6371 * np.ones(np.shape(CMB))
 
     # Transform to cartesian coords
@@ -393,7 +393,7 @@ def Plot_3D_Earth(phase_list: list, earth_model: str, inv_selection: obspy.Inven
     CMB_neg = CMB.copy()
     CMB_neg[CMB_neg>0] = 0 # for blue
     CMB_pos = CMB.copy()
-    CMB_neg[CMB_pos<0] = 0 # for red
+    CMB_pos[CMB_pos<0] = 0 # for red
     # Define color table (including alpha), which must be uint8 and [0,255]
     colors = np.ones((N, 4))
     colors[:,0] = (1 - CMB_pos.flatten() / np.abs(CMB).max()) * 255 # red
@@ -402,13 +402,46 @@ def Plot_3D_Earth(phase_list: list, earth_model: str, inv_selection: obspy.Inven
     colors = colors.astype(np.uint8)
     colors[:,-1] = 255 # No transparency
     
+    if len(file) == 0:
+        colors = np.ones((N, 4))
+        colors[:,0] = 0 * CMB_pos.flatten()
+        colors[:,1] = 0 * np.abs(CMB).flatten()
+        colors[:,2] = 0 * CMB_neg.flatten()
+        colors = colors.astype(np.uint8)
+        colors[:,-1] = 255 # No transparency
+        
+        
+        
     mlab.figure(bgcolor=(0,0,0))
     # Plot CMB
-    CMB_surface = mlab.mesh(X, Y, Z, scalars=scalars, mode='sphere', opacity=0.6)
+    CMB_surface = mlab.mesh(X, Y, Z, scalars=scalars, mode='sphere', opacity=1)
     # Set look-up table and redraw
     CMB_surface.module_manager.scalar_lut_manager.lut.table = colors
     # Plot surface
-    Surface = mlab.mesh(X_surface, Y_surface, Z_surface, color=(1,1,1), opacity=0.2)    
+    Surface = mlab.mesh(X_surface, Y_surface, Z_surface, color=(1,1,1), opacity=0.2) 
+    
+     # Create Basemap instance
+    m = Basemap(projection='cyl', llcrnrlat=-90, urcrnrlat=90,
+                llcrnrlon=-180, urcrnrlon=180, resolution='c')
+    
+    # Plot continent contours
+    m.drawcoastlines(linewidth=0.5)
+    
+    # Get continent boundary polygons
+    polys = m.landpolygons
+    
+    # Plot each continent polygon
+    for polygon in polys:
+        coords = np.array(polygon.get_coords())
+        lon = coords[:, 0]
+        lat = coords[:, 1]
+        r = 6371 * np.ones(len(lon))
+        x = r * np.cos(np.deg2rad(lat)) * np.cos(np.deg2rad(lon)) 
+        y = r * np.cos(np.deg2rad(lat)) * np.sin(np.deg2rad(lon))
+        z = r * np.sin(np.deg2rad(lat))
+        mlab.plot3d(x, y, z, color=(0.8, 0.8, 0.8), tube_radius = 10)
+
+       
     if PLOT_RAYS is True:
         # Get location of earthquake 
         evt_depth = cat[0].origins[0].depth
@@ -462,6 +495,5 @@ def Plot_3D_Earth(phase_list: list, earth_model: str, inv_selection: obspy.Inven
                             Y_ray = r * np.cos(np.deg2rad(lat)) * np.sin(np.deg2rad(lon))
                             Z_ray = r * np.sin(np.deg2rad(lat))
                             
-                        mlab.plot3d(X_ray, Y_ray, Z_ray, color=(0.1568,0.70588,1), tube_radius=10)
-
+                        mlab.plot3d(X_ray, Y_ray, Z_ray, color=(0.1568,0.70588,1), tube_radius=20)
     mlab.show()    

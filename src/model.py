@@ -339,7 +339,7 @@ class Model:
             times.append(time)
             
         return times, streams, inv
-                
+
                 
     def _get_time(self, data_type, stream, cat):
         # Get the times for the selected traces

@@ -1,7 +1,7 @@
 # Libraries
 import obspy 
 # In house files
-from AxiSEM3D_Data_Handler.element_output import element_output
+from AxiSEM3D_Data_Handler.element_output import ElementOutput
 
 class ElementsDatabase():
     
@@ -11,7 +11,7 @@ class ElementsDatabase():
 
 
     def add_to_database(self, elements_path: str, name: str, 
-                        element_object: element_output, 
+                        element_object: ElementOutput, 
                         cat: obspy.Catalog):
         self.database[name] = {'element_object': element_object, 'cat': cat,
                                'elements_path': elements_path}

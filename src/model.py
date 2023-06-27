@@ -9,7 +9,7 @@ from obspy import UTCDateTime
 import yaml
 
 # In house files
-from AxiSEM3D_Data_Handler.element_output import element_output
+from AxiSEM3D_Data_Handler.element_output import ElementOutput
 from .wavefield_db import WavefieldDatabase
 from .elements_db import ElementsDatabase
 
@@ -41,76 +41,19 @@ class Model:
 
     def load_elements(self, elements_path):
         name = elements_path.split('/')[-1]
-        element_object = element_output(elements_path, grid_format=[0, 2, 4])
+        element_object = ElementOutput(elements_path)
         # We need to crate a catalogue on the spot for element outputs
-        cat = self._create_elements_cat(elements_path)
+        cat = element_object.catalogue
         self.elements_database.add_to_database(elements_path, name, 
                                                element_object, cat)
 
-
-    def _create_elements_cat(self, elements_path):
-        # Create a catalogue
-        source_path = elements_path + '/input/inparam.source.yaml'
-        with open(source_path, 'r') as file:
-                source_yaml = yaml.load(file, Loader=yaml.FullLoader)
-                cat = Catalog()
-                for source in source_yaml['list_of_sources']:
-                    for items in source.items():
-                        event = Event()
-                        origin = Origin()
-                        
-                        origin.time = UTCDateTime("1970-01-01T00:00:00.0Z") # default in obspy
-                        origin.latitude = items[1]['location']['latitude_longitude'][0]
-                        origin.longitude = items[1]['location']['latitude_longitude'][1]
-                        origin.depth = items[1]['location']['depth']
-                        origin.depth_type = "operator assigned"
-                        origin.evaluation_mode = "manual"
-                        origin.evaluation_status = "preliminary"
-                        origin.region = FlinnEngdahl().get_region(origin.longitude, 
-                                                                  origin.latitude)
-                        if items[1]['mechanism']['type'] == 'FORCE_VECTOR':
-                            m_rr = items[1]['mechanism']['data'][0]
-                            m_tt = items[1]['mechanism']['data'][1]
-                            m_pp = items[1]['mechanism']['data'][2]
-                            m_rt = 0
-                            m_rp = 0
-                            m_tp = 0
-                        else: 
-                            m_rr = items[1]['mechanism']['data'][0]
-                            m_tt = items[1]['mechanism']['data'][1]
-                            m_pp = items[1]['mechanism']['data'][2]
-                            m_rt = items[1]['mechanism']['data'][3]
-                            m_rp = items[1]['mechanism']['data'][4]
-                            m_tp = items[1]['mechanism']['data'][5]
-                        
-                        focal_mechanisms = FocalMechanism()
-                        tensor = Tensor()
-                        moment_tensor = MomentTensor()
-                        tensor.m_rr = m_rr
-                        tensor.m_tt = m_tt
-                        tensor.m_pp = m_pp
-                        tensor.m_rt = m_rt
-                        tensor.m_rp = m_rp
-                        tensor.m_tp = m_tp
-                        moment_tensor.tensor = tensor
-                        focal_mechanisms.moment_tensor = moment_tensor
-                                            
-                        # make associations, put everything together
-                        cat.append(event)
-                        event.origins = [origin]
-                        event.focal_mechanisms = [focal_mechanisms]
-
-        return cat
-    
     
     def auto_load_wavefield(self, wavefield_path, data_type):
         name = wavefield_path.split('/')[-1]
         stream = read(wavefield_path)
         
         # find dir path
-        dir_path = ''
-        for element in wavefield_path.split('/')[0:-1]:
-            dir_path += element + '/'
+        dir_path = os.path.dirname(wavefield_path)
         # Read events catalogue
         for file in os.listdir(dir_path):
             if file.endswith('cat.xml'):
@@ -218,7 +161,7 @@ class Model:
 
             # finally put back in the main stream the selected traces
             stream = stream_chn_selection
-            
+
             # Bandpass   
             if len(self.controller.view.freq_min.get()) == 0:
                 freq_min = None
@@ -247,7 +190,6 @@ class Model:
         streams = []
 
         for element in self.elements_database.selected_database:
-            elements_path = self.elements_database.database[element]['elements_path']
             element_object = self.elements_database.database[element]['element_object']
             channel_time = element_object.data_time
 
@@ -262,8 +204,9 @@ class Model:
                 # Create point in geographical coords to be fed to element_output.py
                 latitude = float(latitudes[i])
                 longitude = float(longitudes[i])
+                radius = 6371000 - depth * 1e3
                 # Get wave data 
-                wave_data = element_object.stream(depth * 1e3, latitude, longitude)
+                wave_data = element_object.stream([radius, latitude, longitude])
                 for trace in wave_data:
                     traces.append(trace)
                 
@@ -275,13 +218,8 @@ class Model:
                 sta_code = wave_data[0].id.split('.')[1]
 
                 # Get coordinates of the stations channels (RTZ, etc)
-                inparam_output_path = elements_path + '/input/inparam.output.yaml'
-                with open(inparam_output_path, 'r') as file:
-                    output_yaml = yaml.load(file, Loader=yaml.FullLoader)
-                    for station_grid in output_yaml['list_of_element_groups']:
-                        station_grid_name = list(station_grid.keys())[0]
-                        channel_type  = station_grid[station_grid_name]['wavefields']['coordinate_frame']
-                
+                channel_type = element_object.coordinate_frame
+
                 # Create network if not already existent
                 net_exists = False
                 for network in inv:
@@ -289,8 +227,8 @@ class Model:
                         net_exists = True
                         net = network
                 if net_exists == False:
-                    net = Network(
-                    code = net_code,
+                    net=Network(
+                    code=net_code,
                     stations=[])
                     # add new network to inventory
                     inv.networks.append(net)
@@ -306,7 +244,7 @@ class Model:
                 # Create the channels
                 for channel in channel_type:
                     cha = Channel(
-                    code='LX' + channel,
+                    code=channel,
                     location_code="",
                     latitude=latitude,
                     longitude=longitude,
@@ -322,10 +260,9 @@ class Model:
                 # the plotter will freak out (this is because the plotter
                 # was originally made for the stations output where the time 
                 # is given for each channel)
-                time.append(channel_time)
-                time.append(channel_time)
-                time.append(channel_time)
-                
+                for i in range(len(wave_data)):
+                    time.append(channel_time)
+
             # Chn choice
             stream_chn_selection = Stream()
             if len(self.controller.view.elements_channel.get()) == 0:

@@ -70,8 +70,6 @@ class Controller():
     def on_press_auto_load_wavefield(self):
         if len(self.view.wavefield_path.get()) == 0:
             tk.messagebox.showerror("Error", "The wavefield path entry is empty!")
-        elif len(self.view.data_type.get()) == 0:
-            tk.messagebox.showerror("Error", "The data type entry is empty!")
         else:
             if self.model.wavefield_database is None:
                 self.model.create_database()
@@ -145,12 +143,10 @@ class Controller():
             self.model.wavefield_database.database
         except:
             tk.messagebox.showerror("Error", "The database is empty!")
-            
         if len(self.model.wavefield_database.selected_database) == 0:
                 tk.messagebox.showerror("Error", "The selected database is empty!")
                 
         else:
-            
             # get the data 
             times, streams = self.model.get_times_and_streams()
             

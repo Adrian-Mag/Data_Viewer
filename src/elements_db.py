@@ -1,7 +1,7 @@
 # Libraries
 import obspy 
 # In house files
-from AxiSEM3D_Data_Handler.element_output import ElementOutput
+from axisem3d_output.core.handlers.element_output import ElementOutput
 
 class ElementsDatabase():
     

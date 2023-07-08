@@ -9,7 +9,7 @@ from obspy import UTCDateTime
 import yaml
 
 # In house files
-from AxiSEM3D_Data_Handler.element_output import ElementOutput
+from axisem3d_output.core.handlers.element_output import ElementOutput
 from .wavefield_db import WavefieldDatabase
 from .elements_db import ElementsDatabase
 

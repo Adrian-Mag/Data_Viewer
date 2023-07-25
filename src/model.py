@@ -7,6 +7,8 @@ from obspy.core.event import Catalog, Event, Origin, FocalMechanism, MomentTenso
 from obspy.geodetics import FlinnEngdahl
 from obspy import UTCDateTime
 import yaml
+import numpy as np
+
 
 # In house files
 from axisem3d_output.core.handlers.element_output import ElementOutput
@@ -206,7 +208,7 @@ class Model:
                 longitude = float(longitudes[i])
                 radius = 6371000 - depth * 1e3
                 # Get wave data 
-                wave_data = element_object.stream([radius, latitude, longitude])
+                wave_data = element_object.stream(np.array([radius, latitude, longitude]))
                 for trace in wave_data:
                     traces.append(trace)
                 

@@ -1,5 +1,5 @@
 import matplotlib
-matplotlib.use('tkagg')
+matplotlib.use('QtAgg')
 import matplotlib.pyplot as plt
 import numpy as np
 from obspy.taup import TauPyModel
@@ -76,9 +76,14 @@ def Plot(times: np.array, streams: obspy.Stream, inv_selection: obspy.Inventory,
     # CAT. IF THEY DON'T THEN THEY SHOULD NOT BE PLOTTED TOGETHER!!!!
     
     # get event location
-    evt_lat = cat[0].origins[0].latitude
-    evt_lon = cat[0].origins[0].longitude
-    evt_depth = cat[0].origins[0].depth
+    try:
+        evt_lat = cat[0].origins[0].latitude
+        evt_lon = cat[0].origins[0].longitude
+        evt_depth = cat[0].origins[0].depth
+    except:
+        evt_lat = cat.origins[0].latitude
+        evt_lon = cat.origins[0].longitude
+        evt_depth = cat.origins[0].depth
     
     # Go trace by trace and find the ID and source-receiver distance
     for trace in streams[0]:

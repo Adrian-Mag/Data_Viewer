@@ -221,7 +221,7 @@ class Controller():
                 
                 # I'm assuming all events are the same !!!!!!!!!!!!!!!!!!!!
                 cat = self.model.elements_database.database[self.view.selected_elements_listbox.get(0)]['cat']
-                
+                print(cat)
                 Plot(times, streams, inv, cat, model, phase_list, 
                              PLOT_DIFFERENCE=False, xlims=None)
 

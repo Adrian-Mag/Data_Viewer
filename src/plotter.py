@@ -353,8 +353,8 @@ def Plot_3D_Earth(phase_list: list, earth_model: str, inv_selection: obspy.Inven
         Nothing: Just plots
     """    
     # Define the lat lon grid (must match data file)
-    lat = np.arange(-90, 90.01, 2)*np.pi/180
-    lon = np.arange(-180, 180.01, 2)*np.pi/180
+    lat = np.arange(-90, 90.01, 1)*np.pi/180
+    lon = np.arange(-180, 180.01, 1)*np.pi/180
     LON, LAT = np.meshgrid(lon, lat)
     nlat = len(lat)
     nlon = len(lon)
@@ -378,7 +378,7 @@ def Plot_3D_Earth(phase_list: list, earth_model: str, inv_selection: obspy.Inven
     
     # Construct CMB and Surface matrices
     R_cmb = 3480
-    R = CMB*100 + R_cmb
+    R = CMB + R_cmb
     R_surface = 6371 * np.ones(np.shape(CMB))
 
     # Transform to cartesian coords
@@ -425,7 +425,7 @@ def Plot_3D_Earth(phase_list: list, earth_model: str, inv_selection: obspy.Inven
     # Plot surface
     Surface = mlab.mesh(X_surface, Y_surface, Z_surface, color=(1,1,1), opacity=0.2) 
     
-     # Create Basemap instance
+    # Create Basemap instance
     m = Basemap(projection='cyl', llcrnrlat=-90, urcrnrlat=90,
                 llcrnrlon=-180, urcrnrlon=180, resolution='c')
     

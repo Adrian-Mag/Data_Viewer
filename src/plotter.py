@@ -9,7 +9,9 @@ from matplotlib.pyplot import get_cmap
 import obspy 
 import tkinter as tk
 from mayavi import mlab
-
+import os
+os.environ['PROJ_LIB'] = '/home/users/scro4564/anaconda3/envs/visualization/share/proj'
+from mpl_toolkits.basemap import Basemap
 
 def _find_distance_in_degree(lat0: float, lon0: float, lat1: float, lon1:float) -> float:
     """Finds the distance in degrees between two geographical points
@@ -413,7 +415,12 @@ def Plot_3D_Earth(phase_list: list, earth_model: str, inv_selection: obspy.Inven
     # Set look-up table and redraw
     CMB_surface.module_manager.scalar_lut_manager.lut.table = colors
     # Plot surface
-    Surface = mlab.mesh(X_surface, Y_surface, Z_surface, color=(1,1,1), opacity=0.2)    
+    Surface = mlab.mesh(X_surface, Y_surface, Z_surface, color=(1,1,1), opacity=0.2)   
+
+    # Create basemap instance
+    m = Basemap(projection='cyl', llcrnrlat=-90, urcrnrlat=90,
+                llcrnrlon=-180, urcrnrlon=180, resolution='c')
+
     if PLOT_RAYS is True:
         # Get location of earthquake 
         evt_depth = cat[0].origins[0].depth
